@@ -53,14 +53,10 @@ def generate_network_table(seed=None):
             + to_byte(random.randint(0, 255))
         )
 
-    # associate each MAC with a sequential IP
-    table = {}
-    ip_counter = 2
-    for mac in macs:
-        table[mac] = "192.168.150." + str(ip_counter)
-        ip_counter += 1
-
-    return table
+    return {
+        mac: f"192.168.150.{str(ip_counter)}"
+        for ip_counter, mac in enumerate(macs, start=2)
+    }
 
 
 def now() -> float:
@@ -72,7 +68,4 @@ def to_absolute_path(path: str) -> str:
     Converts a relative path to absolute, useful when converting cowrie configs (relative) to qemu paths
     (which must be absolute)
     """
-    if not os.path.isabs(path):
-        return os.path.join(os.getcwd(), path)
-    else:
-        return path
+    return path if os.path.isabs(path) else os.path.join(os.getcwd(), path)

@@ -244,17 +244,15 @@ class Command_iptables(HoneyPotCommand):
 
     def is_valid_table(self, table: str) -> bool:
         if self.user_is_root():
-            # Verify table existence
-            if table not in self.tables.keys():
-                self.write(
-                    """{}: can\'t initialize iptables table \'{}\': Table does not exist (do you need to insmod?)
-Perhaps iptables or your kernel needs to be upgraded.\n""".format(
-                        Command_iptables.APP_NAME, table
-                    )
-                )
-                self.exit()
-            else:
+            if table in self.tables.keys():
                 return True
+            self.write(
+                """{}: can\'t initialize iptables table \'{}\': Table does not exist (do you need to insmod?)
+Perhaps iptables or your kernel needs to be upgraded.\n""".format(
+                    Command_iptables.APP_NAME, table
+                )
+            )
+            self.exit()
         else:
             self.no_permission()
 
@@ -371,10 +369,7 @@ Options:
                 chains = iter(self.current_table.keys())
 
             # Output buffer
-            output = []
-
-            for chain in chains:
-                output.append("-P %s ACCEPT" % chain)
+            output = [f"-P {chain} ACCEPT" for chain in chains]
 
             # Done
             self.write("{}\n".format("\n".join(output)))
@@ -404,15 +399,16 @@ Options:
             for chain in chains:
                 # Chain table header
                 chain_output = [
-                    "Chain %s (policy ACCEPT)" % chain,
+                    f"Chain {chain} (policy ACCEPT)",
                     "target     prot opt source               destination",
                 ]
 
+
                 # Format the rules
-                for rule in self.current_table[chain]:
-                    chain_output.append(
-                        "%-10s %-4s %-3s %-20s %-20s %s %s" % rule,
-                    )
+                chain_output.extend(
+                    "%-10s %-4s %-3s %-20s %-20s %s %s" % rule
+                    for rule in self.current_table[chain]
+                )
 
                 # Create one string
                 output.append("\n".join(chain_output))
@@ -461,10 +457,9 @@ Options:
         """
 
         self.write(
-            "{} {}: no command specified'\nTry `iptables -h' or 'iptables --help' for more information.\n".format(
-                Command_iptables.APP_NAME, Command_iptables.APP_VERSION
-            )
+            f"{Command_iptables.APP_NAME} {Command_iptables.APP_VERSION}: no command specified'\nTry `iptables -h' or 'iptables --help' for more information.\n"
         )
+
         self.exit()
 
     def unknown_option(self, option):
@@ -473,10 +468,9 @@ Options:
         """
 
         self.write(
-            "{} {}: unknown option '{}''\nTry `iptables -h' or 'iptables --help' for more information.\n".format(
-                Command_iptables.APP_NAME, Command_iptables.APP_VERSION, option
-            )
+            f"{Command_iptables.APP_NAME} {Command_iptables.APP_VERSION}: unknown option '{option}''\nTry `iptables -h' or 'iptables --help' for more information.\n"
         )
+
         self.exit()
 
     def bad_argument(self, argument):
@@ -485,10 +479,9 @@ Options:
         """
 
         self.write(
-            "Bad argument '{}'\nTry `iptables -h' or 'iptables --help' for more information.\n".format(
-                argument
-            )
+            f"Bad argument '{argument}'\nTry `iptables -h' or 'iptables --help' for more information.\n"
         )
+
         self.exit()
 
 

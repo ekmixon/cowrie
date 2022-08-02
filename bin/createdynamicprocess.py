@@ -6,8 +6,7 @@ import random
 
 import psutil
 
-command: dict = {}
-command["command"] = {}
+command: dict = {"command": {}}
 command["command"]["ps"] = []
 
 randomStates = ["Ss", "S<", "D<", "Ss+"]
@@ -31,20 +30,21 @@ for proc in psutil.process_iter():
     except psutil.NoSuchProcess:
         pass
     else:
-        object = {}
-        object["USER"] = info["username"]
-        object["PID"] = info["pid"]
-        if info["cmdline"]:
-            object["COMMAND"] = "/".join(info["cmdline"])
-        else:
-            object["COMMAND"] = "[ " + info["name"] + " ]"
-        object["CPU"] = info["cpu_percent"]
-        object["MEM"] = info["memory_percent"]
-        object["RSS"] = info["memory_info"].rss
-        object["VSZ"] = info["memory_info"].vms
-        object["START"] = datetime.datetime.fromtimestamp(info["create_time"]).strftime(
-            "%b%d"
-        )
+        object = {
+            "USER": info["username"],
+            "PID": info["pid"],
+            "COMMAND": "/".join(info["cmdline"])
+            if info["cmdline"]
+            else "[ " + info["name"] + " ]",
+            "CPU": info["cpu_percent"],
+            "MEM": info["memory_percent"],
+            "RSS": info["memory_info"].rss,
+            "VSZ": info["memory_info"].vms,
+            "START": datetime.datetime.fromtimestamp(
+                info["create_time"]
+            ).strftime("%b%d"),
+        }
+
         if info["terminal"]:
             object["TTY"] = str(info["terminal"]).replace("/dev/", "")
         else:

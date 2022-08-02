@@ -64,12 +64,8 @@ class HoneyPotCommand:
                 or p[fs.A_REALFILE].startswith("honeyfs")
                 or not b_append
             ):
-                tmp_fname = "{}-{}-{}-redir_{}".format(
-                    time.strftime("%Y%m%d-%H%M%S"),
-                    self.protocol.getProtoTransport().transportId,
-                    self.protocol.terminal.transport.session.id,
-                    re.sub("[^A-Za-z0-9]", "_", self.outfile),
-                )
+                tmp_fname = f'{time.strftime("%Y%m%d-%H%M%S")}-{self.protocol.getProtoTransport().transportId}-{self.protocol.terminal.transport.session.id}-redir_{re.sub("[^A-Za-z0-9]", "_", self.outfile)}'
+
                 self.safeoutfile = os.path.join(
                     CowrieConfig.get("honeypot", "download_path"), tmp_fname
                 )

@@ -78,7 +78,7 @@ class Command_wc(HoneyPotCommand):
                     " +", " ", contents.decode().strip("\n").strip()
                 ).split(" ")
                 self.write(f"{len(contentsplit)}\n")
-            elif opt == "-m" or opt == "-c":
+            elif opt in ["-m", "-c"]:
                 self.write(f"{len(contents)}\n")
             elif opt == "-v":
                 self.version()
@@ -90,9 +90,7 @@ class Command_wc(HoneyPotCommand):
             self.exit()
             return
 
-        if self.args[0] == ">":
-            pass
-        else:
+        if self.args[0] != ">":
             try:
                 optlist, args = getopt.getopt(self.args, "cmlLwhv")
             except getopt.GetoptError as err:

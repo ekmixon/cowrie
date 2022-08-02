@@ -51,19 +51,17 @@ class Command_dd(HoneyPotCommand):
                     self.errorWrite(f"dd: {iname}: Is a directory\n")
                     bSuccess = False
 
-                if bSuccess:
-                    if "bs" in self.ddargs:
-                        block = parse_size(self.ddargs["bs"])
-                        if block <= 0:
-                            self.errorWrite(f"dd: invalid number '{block}'\n")
-                            bSuccess = False
+                if bSuccess and "bs" in self.ddargs:
+                    block = parse_size(self.ddargs["bs"])
+                    if block <= 0:
+                        self.errorWrite(f"dd: invalid number '{block}'\n")
+                        bSuccess = False
 
-                if bSuccess:
-                    if "count" in self.ddargs:
-                        c = int(self.ddargs["count"])
-                        if c < 0:
-                            self.errorWrite(f"dd: invalid number '{c}'\n")
-                            bSuccess = False
+                if bSuccess and "count" in self.ddargs:
+                    c = int(self.ddargs["count"])
+                    if c < 0:
+                        self.errorWrite(f"dd: invalid number '{c}'\n")
+                        bSuccess = False
 
                 if bSuccess:
                     try:
@@ -111,8 +109,8 @@ def parse_size(param):
     z = re.search(pattern, param)
     if not z:
         return 0
-    digits = int(z.group(1))
-    letters = z.group(2)
+    digits = int(z[1])
+    letters = z[2]
 
     if not letters:
         multiplier = 1
@@ -128,7 +126,7 @@ def parse_size(param):
         multiplier = 1024
     elif letters == "MB":
         multiplier = 1000 * 1000
-    elif letters == "M" or letters == "xM":
+    elif letters in ["M", "xM"]:
         multiplier = 1024 * 1024
     elif letters == "GB":
         multiplier = 1000 * 1000 * 1000

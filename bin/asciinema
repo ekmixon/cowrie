@@ -15,19 +15,18 @@ COLOR_RESET = "\033[0m"
 
 
 def playlog(fd, settings):
-    thelog = {}
-    thelog["version"] = 1
-    thelog["width"] = 80
-    thelog["height"] = 24
-    thelog["duration"] = 0.0
-    thelog["command"] = "/bin/bash"
-    thelog["title"] = "Cowrie Recording"
-    theenv = {}
-    theenv["TERM"] = "xterm256-color"
-    theenv["SHELL"] = "/bin/bash"
-    thelog["env"] = theenv
+    theenv = {"TERM": "xterm256-color", "SHELL": "/bin/bash"}
     stdout = []
-    thelog["stdout"] = stdout
+    thelog = {
+        "version": 1,
+        "width": 80,
+        "height": 24,
+        "duration": 0.0,
+        "command": "/bin/bash",
+        "title": "Cowrie Recording",
+        "env": theenv,
+        "stdout": stdout,
+    }
 
     ssize = struct.calcsize("<iLiiLL")
 
@@ -46,39 +45,40 @@ def playlog(fd, settings):
         if currtty == 0:
             currtty = tty
 
-        if str(tty) == str(currtty) and op == OP_WRITE:
-            # the first stream seen is considered 'output'
-            if prefdir == 0:
-                prefdir = dir
-            if dir == TYPE_INTERACT:
-                color = COLOR_INTERACT
-            elif dir == TYPE_INPUT:
-                color = COLOR_INPUT
-            if dir == prefdir:
-                curtime = float(sec) + float(usec) / 1000000
-                if prevtime != 0:
-                    sleeptime = curtime - prevtime
-                prevtime = curtime
-                if settings["colorify"] and color:
-                    sys.stdout.write(color)
+        if str(tty) == str(currtty):
+            if op == OP_WRITE:
+                # the first stream seen is considered 'output'
+                if prefdir == 0:
+                    prefdir = dir
+                if dir == TYPE_INTERACT:
+                    color = COLOR_INTERACT
+                elif dir == TYPE_INPUT:
+                    color = COLOR_INPUT
+                if dir == prefdir:
+                    curtime = float(sec) + float(usec) / 1000000
+                    if prevtime != 0:
+                        sleeptime = curtime - prevtime
+                    prevtime = curtime
+                    if settings["colorify"] and color:
+                        sys.stdout.write(color)
 
-                # rtrox: While playback works properly
-                #        with the asciinema client, upload
-                #        causes mangling of the data due to
-                #        newlines being misinterpreted without
-                #        carriage returns.
-                data = data.replace(b"\n", b"\r\n").decode("UTF-8")
+                    # rtrox: While playback works properly
+                    #        with the asciinema client, upload
+                    #        causes mangling of the data due to
+                    #        newlines being misinterpreted without
+                    #        carriage returns.
+                    data = data.replace(b"\n", b"\r\n").decode("UTF-8")
 
-                thedata = [sleeptime, data]
-                thelog["duration"] += sleeptime
-                stdout.append(thedata)
+                    thedata = [sleeptime, data]
+                    thelog["duration"] += sleeptime
+                    stdout.append(thedata)
 
-                if settings["colorify"] and color:
-                    sys.stdout.write(COLOR_RESET)
-                    color = None
+                    if settings["colorify"] and color:
+                        sys.stdout.write(COLOR_RESET)
+                        color = None
 
-        elif str(tty) == str(currtty) and op == OP_CLOSE:
-            break
+            elif op == OP_CLOSE:
+                break
 
     if settings["output"] == "":
         json.dump(thelog, sys.stdout, indent=4)
@@ -89,9 +89,9 @@ def playlog(fd, settings):
 
 def help(verbose=False):
     print(
-        "usage: %s [-c] [-o output] <tty-log-file> <tty-log-file>..."
-        % os.path.basename(sys.argv[0])
+        f"usage: {os.path.basename(sys.argv[0])} [-c] [-o output] <tty-log-file> <tty-log-file>..."
     )
+
 
     if verbose:
         print(
@@ -107,16 +107,16 @@ if __name__ == "__main__":
     try:
         optlist, args = getopt.getopt(sys.argv[1:], "hco:")
     except getopt.GetoptError as error:
-        sys.stderr.write("{}: {}\n".format(sys.argv[0], error))
+        sys.stderr.write(f"{sys.argv[0]}: {error}\n")
         help()
         sys.exit(1)
 
     for o, a in optlist:
-        if o == "-h":
-            help()
         if o == "-c":
             settings["colorify"] = True
-        if o == "-o":
+        elif o == "-h":
+            help()
+        elif o == "-o":
             settings["output"] = a
 
     if len(args) < 1:
@@ -128,4 +128,4 @@ if __name__ == "__main__":
             logfd = open(logfile, "rb")
             playlog(logfd, settings)
         except OSError as e:
-            sys.stderr.write("{}: {}\n".format(sys.argv[0], e))
+            sys.stderr.write(f"{sys.argv[0]}: {e}\n")

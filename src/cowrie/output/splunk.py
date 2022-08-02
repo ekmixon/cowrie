@@ -58,10 +58,7 @@ class Output(cowrie.core.output.Output):
             splunkentry["source"] = self.source
         if self.sourcetype:
             splunkentry["sourcetype"] = self.sourcetype
-        if self.host:
-            splunkentry["host"] = self.host
-        else:
-            splunkentry["host"] = logentry["sensor"]
+        splunkentry["host"] = self.host or logentry["sensor"]
         splunkentry["event"] = logentry
         self.postentry(splunkentry)
 
@@ -92,12 +89,11 @@ class Output(cowrie.core.output.Output):
         def cbResponse(response):
             if response.code == 200:
                 return
-            else:
-                log.msg(f"SplunkHEC response: {response.code} {response.phrase}")
-                d = client.readBody(response)
-                d.addCallback(cbBody)
-                d.addErrback(cbPartial)
-                return d
+            log.msg(f"SplunkHEC response: {response.code} {response.phrase}")
+            d = client.readBody(response)
+            d.addCallback(cbBody)
+            d.addErrback(cbPartial)
+            return d
 
         def cbError(failure):
             failure.printTraceback()

@@ -197,8 +197,7 @@ class FrontendTelnetTransport(TelnetTransport, TimeoutMixin):
             # wait till backend connects to send packets to them
             log.msg("Connection to backend not ready, buffering packet from frontend")
             self.delayedPacketsToBackend.append(payload)
+        elif len(self.delayedPacketsToBackend) > 0:
+            self.delayedPacketsToBackend.append(payload)
         else:
-            if len(self.delayedPacketsToBackend) > 0:
-                self.delayedPacketsToBackend.append(payload)
-            else:
-                self.client.transport.write(payload)
+            self.client.transport.write(payload)

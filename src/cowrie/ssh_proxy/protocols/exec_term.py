@@ -62,12 +62,8 @@ class ExecTerm(base_protocol.BaseProtocol):
         self.ttylogSize: int = 0
 
         if self.ttylogEnabled:
-            self.ttylogFile = "{}/{}-{}-{}e.log".format(
-                self.ttylogPath,
-                time.strftime("%Y%m%d-%H%M%S"),
-                self.transportId,
-                self.channelId,
-            )
+            self.ttylogFile = f'{self.ttylogPath}/{time.strftime("%Y%m%d-%H%M%S")}-{self.transportId}-{self.channelId}e.log'
+
             ttylog.ttylog_open(self.ttylogFile, self.startTime)
 
     def parse_packet(self, parent: str, payload: bytes) -> None:

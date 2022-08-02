@@ -25,21 +25,21 @@ def durationHuman(duration: float) -> str:
     years: float
     years, days = divmod(days, 365.242199)
 
-    syears: str = str(years)
-    sseconds: str = str(seconds).rjust(2, "0")
-    sminutes: str = str(minutes).rjust(2, "0")
-    shours: str = str(hours).rjust(2, "0")
-
     sduration: list[str] = []
     if years > 0:
-        sduration.append("{} year{} ".format(syears, "s" * (years != 1)))
+        syears: str = str(years)
+        sduration.append(f'{syears} year{"s" * (years != 1)} ')
     else:
         if days > 0:
-            sduration.append("{} day{} ".format(days, "s" * (days != 1)))
+            sduration.append(f'{days} day{"s" * (days != 1)} ')
+        shours: str = str(hours).rjust(2, "0")
+
         if hours > 0:
             sduration.append(f"{shours}:")
+        sminutes: str = str(minutes).rjust(2, "0")
         if minutes >= 0:
             sduration.append(f"{sminutes}:")
+        sseconds: str = str(seconds).rjust(2, "0")
         if seconds >= 0:
             sduration.append(f"{sseconds}")
 
@@ -73,7 +73,7 @@ def uptime(total_seconds: float) -> str:
     Thanks to http://thesmithfam.org/blog/2005/11/19/python-uptime-script/
     (modified to look like the real uptime command)
     """
-    total_seconds = float(total_seconds)
+    total_seconds = total_seconds
 
     # Helper vars:
     MINUTE: int = 60
@@ -90,11 +90,11 @@ def uptime(total_seconds: float) -> str:
 
     s: str = ""
     if days > 0:
-        s += str(days) + " " + (days == 1 and "day" or "days") + ", "
-    if len(s) > 0 or hours > 0:
-        s += "{}:{}".format(str(hours).rjust(2), str(minutes).rjust(2, "0"))
+        s += f"{days} " + ((days == 1 and "day" or "days")) + ", "
+    if s != "" or hours > 0:
+        s += f'{str(hours).rjust(2)}:{str(minutes).rjust(2, "0")}'
     else:
-        s += f"{str(minutes)} min"
+        s += f"{minutes} min"
     return s
 
 
@@ -103,8 +103,6 @@ def get_endpoints_from_section(
 ) -> list[str]:
     listen_addr: str
     listen_port: int
-    listen_endpoints: list[str] = []
-
     if cfg.has_option(section, "listen_endpoints"):
         return cfg.get(section, "listen_endpoints").split()
 
@@ -118,10 +116,7 @@ def get_endpoints_from_section(
     else:
         listen_port = default_port
 
-    for i in listen_addr.split():
-        listen_endpoints.append(f"tcp:{listen_port}:interface={i}")
-
-    return listen_endpoints
+    return [f"tcp:{listen_port}:interface={i}" for i in listen_addr.split()]
 
 
 def create_endpoint_services(reactor, parent, listen_endpoints, factory):

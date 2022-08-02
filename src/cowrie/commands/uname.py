@@ -77,14 +77,7 @@ def uname_fail_extra(arg):
 
 class Command_uname(HoneyPotCommand):
     def full_uname(self):
-        return "{} {} {} {} {} {}\n".format(
-            kernel_name(),
-            self.protocol.hostname,
-            kernel_version(),
-            kernel_build_string(),
-            hardware_platform(),
-            operating_system(),
-        )
+        return f"{kernel_name()} {self.protocol.hostname} {kernel_version()} {kernel_build_string()} {hardware_platform()} {operating_system()}\n"
 
     def call(self):
         opts = {
@@ -133,8 +126,7 @@ class Command_uname(HoneyPotCommand):
                     self.write(uname_fail_extra("-"))
                     return
 
-                for split_arg in a:
-                    arg_block.append(split_arg)
+                arg_block.extend(iter(a))
             else:
                 self.write(uname_fail_extra(a))
                 return
@@ -180,7 +172,7 @@ class Command_uname(HoneyPotCommand):
         if opts["os"]:
             output.append(operating_system())
 
-        if len(output) < 1:
+        if not output:
             output.append(kernel_name())
 
         self.write(" ".join(output) + "\n")

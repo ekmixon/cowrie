@@ -79,9 +79,7 @@ class Command_ping(HoneyPotCommand):
                 self.exit()
         else:
             s = hashlib.md5((self.host).encode("utf-8")).hexdigest()
-            self.ip = ".".join(
-                [str(int(x, 16)) for x in (s[0:2], s[2:4], s[4:6], s[6:8])]
-            )
+            self.ip = ".".join([str(int(x, 16)) for x in (s[:2], s[2:4], s[4:6], s[6:8])])
 
         self.running = True
         self.write(f"PING {self.host} ({self.ip}) 56(84) bytes of data.\n")
@@ -115,11 +113,10 @@ class Command_ping(HoneyPotCommand):
     def handle_CTRL_C(self):
         if self.running is False:
             return HoneyPotCommand.handle_CTRL_C(self)
-        else:
-            self.write("^C\n")
-            self.scheduled.cancel()
-            self.printstatistics()
-            self.exit()
+        self.write("^C\n")
+        self.scheduled.cancel()
+        self.printstatistics()
+        self.exit()
 
 
 commands["/bin/ping"] = Command_ping

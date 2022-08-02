@@ -105,12 +105,8 @@ class Command_scp(HoneyPotCommand):
         self.protocol.terminal.write("\x00")
 
     def drop_tmp_file(self, data, name):
-        tmp_fname = "{}-{}-{}-scp_{}".format(
-            time.strftime("%Y%m%d-%H%M%S"),
-            self.protocol.getProtoTransport().transportId,
-            self.protocol.terminal.transport.session.id,
-            re.sub("[^A-Za-z0-9]", "_", name),
-        )
+        tmp_fname = f'{time.strftime("%Y%m%d-%H%M%S")}-{self.protocol.getProtoTransport().transportId}-{self.protocol.terminal.transport.session.id}-scp_{re.sub("[^A-Za-z0-9]", "_", name)}'
+
 
         self.safeoutfile = os.path.join(self.download_path, tmp_fname)
 
@@ -166,24 +162,18 @@ class Command_scp(HoneyPotCommand):
 
                 r = re.search(r"C(0[\d]{3}) ([\d]+) ([^\s]+)", header)
 
-                if r and r.group(1) and r.group(2) and r.group(3):
+                if r and r[1] and r[2] and r[3]:
 
-                    dend = pos + int(r.group(2))
+                    dend = pos + int(r[2])
 
-                    if dend > len(data):
-                        dend = len(data)
-
+                    dend = min(dend, len(data))
                     d = data[pos:dend]
 
-                    if self.out_dir:
-                        fname = os.path.join(self.out_dir, r.group(3))
-                    else:
-                        fname = r.group(3)
-
+                    fname = os.path.join(self.out_dir, r[3]) if self.out_dir else r[3]
                     outfile = self.fs.resolve_path(fname, self.protocol.cwd)
 
                     try:
-                        self.fs.mkfile(outfile, 0, 0, r.group(2), r.group(1))
+                        self.fs.mkfile(outfile, 0, 0, r[2], r[1])
                     except fs.FileNotFound:
                         # The outfile locates at a non-existing directory.
                         self.errorWrite(f"-scp: {outfile}: No such file or directory\n")

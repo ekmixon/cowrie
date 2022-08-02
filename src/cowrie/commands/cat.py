@@ -59,8 +59,7 @@ class Command_cat(HoneyPotCommand):
                     continue
 
                 try:
-                    contents = self.fs.file_contents(pname)
-                    if contents:
+                    if contents := self.fs.file_contents(pname):
                         self.output(contents)
                     else:
                         raise FileNotFound
@@ -80,9 +79,7 @@ class Command_cat(HoneyPotCommand):
 
         if isinstance(input, str):
             input = input.encode("utf8")
-        elif isinstance(input, bytes):
-            pass
-        else:
+        elif not isinstance(input, bytes):
             log.msg(f"unusual cat input {repr(input)}")
 
         lines = input.split(b"\n")

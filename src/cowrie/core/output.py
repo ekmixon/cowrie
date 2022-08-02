@@ -73,18 +73,7 @@ def convert(input):
         return input
     if isinstance(input, dict):
         return {convert(key): convert(value) for key, value in list(input.items())}
-    if isinstance(input, dict):
-        return {convert(key): convert(value) for key, value in list(input.items())}
-    elif isinstance(input, list):
-        return [convert(element) for element in input]
-    elif isinstance(input, bytes):
-        try:
-            string = input.decode("utf-8")
-        except UnicodeDecodeError:
-            string = repr(input)
-        return string
-    else:
-        return input
+    return input
 
 
 class Output(metaclass=abc.ABCMeta):
@@ -203,7 +192,6 @@ class Output(metaclass=abc.ABCMeta):
         if "sessionno" in ev:
             sessionno = ev["sessionno"]
             del ev["sessionno"]
-        # Maybe it's passed explicitly
         elif "session" in ev:
             # reverse engineer sessionno
             try:
@@ -214,16 +202,12 @@ class Output(metaclass=abc.ABCMeta):
                 )
             except StopIteration:
                 return
-        # Extract session id from the twisted log prefix
         elif "system" in ev:
             sessionno = "0"
-            telnetmatch = self.telnetRegex.match(ev["system"])
-            if telnetmatch:
+            if telnetmatch := self.telnetRegex.match(ev["system"]):
                 sessionno = f"T{telnetmatch.groups()[0]}"
-            else:
-                sshmatch = self.sshRegex.match(ev["system"])
-                if sshmatch:
-                    sessionno = f"S{sshmatch.groups()[0]}"
+            elif sshmatch := self.sshRegex.match(ev["system"]):
+                sessionno = f"S{sshmatch.groups()[0]}"
             if sessionno == "0":
                 return
 

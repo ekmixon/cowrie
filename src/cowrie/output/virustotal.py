@@ -193,10 +193,7 @@ class Output(cowrie.core.output.Output):
 
                 try:
                     b = os.path.basename(urlparse(entry["url"]).path)
-                    if b == "":
-                        fileName = entry["shasum"]
-                    else:
-                        fileName = b
+                    fileName = entry["shasum"] if b == "" else b
                 except KeyError:
                     fileName = entry["shasum"]
 
@@ -482,22 +479,29 @@ def encode_multipart_formdata(fields, files):
     """
     BOUNDARY = b"----------ThIs_Is_tHe_bouNdaRY_$"
     L = []
-    for (key, value) in fields:
-        L.append(b"--" + BOUNDARY)
-        L.append(b'Content-Disposition: form-data; name="%s"' % key.encode())
-        L.append(b"")
-        L.append(value.encode())
-    for (key, filename, value) in files:
-        L.append(b"--" + BOUNDARY)
-        L.append(
-            b'Content-Disposition: form-data; name="%s"; filename="%s"'
-            % (key.encode(), filename.encode())
+    for key, value in fields:
+        L.extend(
+            (
+                b"--" + BOUNDARY,
+                b'Content-Disposition: form-data; name="%s"' % key.encode(),
+                b"",
+                value.encode(),
+            )
         )
-        L.append(b"Content-Type: application/octet-stream")
-        L.append(b"")
-        L.append(value.read())
-    L.append(b"--" + BOUNDARY + b"--")
-    L.append(b"")
+
+    for key, filename, value in files:
+        L.extend(
+            (
+                b"--" + BOUNDARY,
+                b'Content-Disposition: form-data; name="%s"; filename="%s"'
+                % (key.encode(), filename.encode()),
+                b"Content-Type: application/octet-stream",
+                b"",
+                value.read(),
+            )
+        )
+
+    L.extend((b"--" + BOUNDARY + b"--", b""))
     body = b"\r\n".join(L)
     content_type = b"multipart/form-data; boundary=%s" % BOUNDARY
 

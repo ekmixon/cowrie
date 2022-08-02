@@ -69,7 +69,7 @@ class Passwd:
                     continue
 
                 if len(line.split(":")) != 7:
-                    log.msg("Error parsing line `" + line + "` in <honeyfs>/etc/passwd")
+                    log.msg(f"Error parsing line `{line}` in <honeyfs>/etc/passwd")
                     continue
 
                 (
@@ -82,12 +82,14 @@ class Passwd:
                     pw_shell,
                 ) = line.split(":")
 
-                e: dict[str, Union[str, int]] = {}
-                e["pw_name"] = pw_name
-                e["pw_passwd"] = pw_passwd
-                e["pw_gecos"] = pw_gecos
-                e["pw_dir"] = pw_dir
-                e["pw_shell"] = pw_shell
+                e: dict[str, Union[str, int]] = {
+                    "pw_name": pw_name,
+                    "pw_passwd": pw_passwd,
+                    "pw_gecos": pw_gecos,
+                    "pw_dir": pw_dir,
+                    "pw_shell": pw_shell,
+                }
+
                 try:
                     e["pw_uid"] = int(pw_uid)
                 except ValueError:
@@ -116,7 +118,7 @@ class Passwd:
         for e in self.passwd:
             if e["pw_name"] == name:
                 return e
-        raise KeyError("getpwnam(): name not found in passwd file: " + name)
+        raise KeyError(f"getpwnam(): name not found in passwd file: {name}")
 
     def getpwuid(self, uid: int) -> dict[str, Any]:
         """
@@ -125,7 +127,7 @@ class Passwd:
         for e in self.passwd:
             if uid == e["pw_uid"]:
                 return e
-        raise KeyError("getpwuid(): uid not found in passwd file: " + str(uid))
+        raise KeyError(f"getpwuid(): uid not found in passwd file: {uid}")
 
     def setpwentry(self, name: str) -> dict[str, Any]:
         """
@@ -136,13 +138,15 @@ class Passwd:
         seed_id = crc32(name.encode("utf-8"))
         seed(seed_id)
 
-        e: dict[str, Any] = {}
-        e["pw_name"] = name
-        e["pw_passwd"] = "x"
-        e["pw_gecos"] = 0
-        e["pw_dir"] = "/home/" + name
-        e["pw_shell"] = "/bin/bash"
-        e["pw_uid"] = randint(1500, 10000)
+        e: dict[str, Any] = {
+            "pw_name": name,
+            "pw_passwd": "x",
+            "pw_gecos": 0,
+            "pw_dir": f"/home/{name}",
+            "pw_shell": "/bin/bash",
+            "pw_uid": randint(1500, 10000),
+        }
+
         e["pw_gid"] = e["pw_uid"]
         self.passwd.append(e)
         return e
@@ -180,8 +184,7 @@ class Group:
 
                 (gr_name, gr_passwd, gr_gid, gr_mem) = line.split(":")
 
-                e: dict[str, Union[str, int]] = {}
-                e["gr_name"] = gr_name
+                e: dict[str, Union[str, int]] = {"gr_name": gr_name}
                 try:
                     e["gr_gid"] = int(gr_gid)
                 except ValueError:
@@ -207,7 +210,7 @@ class Group:
         for e in self.group:
             if name == e["gr_name"]:
                 return e
-        raise KeyError("getgrnam(): name not found in group file: " + name)
+        raise KeyError(f"getgrnam(): name not found in group file: {name}")
 
     def getgrgid(self, uid: int) -> dict[str, Any]:
         """
@@ -216,4 +219,4 @@ class Group:
         for e in self.group:
             if uid == e["gr_gid"]:
                 return e
-        raise KeyError("getgruid(): uid not found in group file: " + str(uid))
+        raise KeyError(f"getgruid(): uid not found in group file: {uid}")

@@ -37,7 +37,7 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
             "ssh", "auth_keyboard_interactive_enabled", fallback=False
         )
 
-        if keyboard is True:
+        if keyboard:
             self.interfaceToMethod[
                 credentials.IPluggableAuthenticationModulesIP
             ] = b"keyboard-interactive"

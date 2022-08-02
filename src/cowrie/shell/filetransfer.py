@@ -128,24 +128,21 @@ class CowrieSFTPDirectory:
             s1.st_uid = pwd.Passwd().getpwuid(s.st_uid)["pw_name"]
             s1.st_gid = pwd.Group().getgrgid(s.st_gid)["gr_name"]
             longname = twisted.conch.ls.lsLine(f, s1)
-            attrs = self.server._getAttrs(s)
-            return (f, longname, attrs)
         elif f == ".":
             s1 = self.server.fs.lstat(self.dir)
             s = self.server.fs.lstat(self.dir)
             s1.st_uid = pwd.Passwd().getpwuid(s.st_uid)["pw_name"]
             s1.st_gid = pwd.Group().getgrgid(s.st_gid)["gr_name"]
             longname = twisted.conch.ls.lsLine(f, s1)
-            attrs = self.server._getAttrs(s)
-            return (f, longname, attrs)
         else:
             s = self.server.fs.lstat(os.path.join(self.dir, f))
             s2 = self.server.fs.lstat(os.path.join(self.dir, f))
             s2.st_uid = pwd.Passwd().getpwuid(s.st_uid)["pw_name"]
             s2.st_gid = pwd.Group().getgrgid(s.st_gid)["gr_name"]
             longname = twisted.conch.ls.lsLine(f, s2)
-            attrs = self.server._getAttrs(s)
-            return (f, longname, attrs)
+
+        attrs = self.server._getAttrs(s)
+        return (f, longname, attrs)
 
     def close(self):
         self.files = []
@@ -212,10 +209,7 @@ class SFTPServerForCowrieUser:
     def getAttrs(self, path, followLinks):
         log.msg(f"SFTP getAttrs: {path}")
         path = self._absPath(path)
-        if followLinks:
-            s = self.fs.stat(path)
-        else:
-            s = self.fs.lstat(path)
+        s = self.fs.stat(path) if followLinks else self.fs.lstat(path)
         return self._getAttrs(s)
 
     def setAttrs(self, path, attrs):

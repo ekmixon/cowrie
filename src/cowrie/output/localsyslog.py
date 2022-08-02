@@ -45,7 +45,7 @@ class Output(cowrie.core.output.Output):
     def start(self):
         self.format = CowrieConfig.get("output_localsyslog", "format")
         facilityString = CowrieConfig.get("output_localsyslog", "facility")
-        self.facility = vars(syslog)["LOG_" + facilityString]
+        self.facility = vars(syslog)[f"LOG_{facilityString}"]
         self.syslog = twisted.python.syslog.SyslogObserver(
             prefix="cowrie", facility=self.facility
         )

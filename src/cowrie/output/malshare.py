@@ -72,11 +72,7 @@ class Output(cowrie.core.output.Output):
                 fileName = entry["shasum"]
             else:
                 b = os.path.basename(p)
-                if b == "":
-                    fileName = entry["shasum"]
-                else:
-                    fileName = b
-
+                fileName = entry["shasum"] if b == "" else b
             self.postfile(entry["outfile"], fileName)
 
         elif entry["eventid"] == "cowrie.session.file_upload":

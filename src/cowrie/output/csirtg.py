@@ -59,9 +59,7 @@ class Output(cowrie.core.output.Output):
         today = str(datetime.now().date())
 
         if not self.context.get(today):
-            self.context = {}
-            self.context[today] = set()
-
+            self.context = {today: set()}
         key = ",".join([peerIP, system])
 
         if key in self.context[today]:
@@ -95,4 +93,4 @@ class Output(cowrie.core.output.Output):
         if self.debug is True:
             log.msg(f"output_csirtg: Submitted {ind!r} to CSIRTG")
 
-        log.msg("output_csirtg: submitted to csirtg at {} ".format(ind["location"]))
+        log.msg(f'output_csirtg: submitted to csirtg at {ind["location"]} ')

@@ -92,10 +92,9 @@ commands["help"] = Command_help
 class Command_w(HoneyPotCommand):
     def call(self):
         self.write(
-            " {} up {},  1 user,  load average: 0.00, 0.00, 0.00\n".format(
-                time.strftime("%H:%M:%S"), utils.uptime(self.protocol.uptime())
-            )
+            f' {time.strftime("%H:%M:%S")} up {utils.uptime(self.protocol.uptime())},  1 user,  load average: 0.00, 0.00, 0.00\n'
         )
+
         self.write(
             "USER     TTY      FROM              LOGIN@   IDLE   JCPU   PCPU WHAT\n"
         )
@@ -183,22 +182,21 @@ class Command_printf(HoneyPotCommand):
     def call(self):
         if not len(self.args):
             self.write("printf: usage: printf [-v var] format [arguments]\n")
-        else:
-            if "-v" not in self.args and len(self.args) < 2:
-                # replace r'\\x' with r'\x'
-                s = "".join(self.args[0]).replace("\\\\x", "\\x")
+        elif "-v" not in self.args and len(self.args) < 2:
+            # replace r'\\x' with r'\x'
+            s = "".join(self.args[0]).replace("\\\\x", "\\x")
 
-                # replace single character escape \x0 with \x00
-                s = re.sub(r"(?<=\\)x([0-9a-fA-F])(?=\\|\"|\'|\s|$)", r"x0\g<1>", s)
+            # replace single character escape \x0 with \x00
+            s = re.sub(r"(?<=\\)x([0-9a-fA-F])(?=\\|\"|\'|\s|$)", r"x0\g<1>", s)
 
-                # strip single and double quotes
-                s = s.strip("\"'")
+            # strip single and double quotes
+            s = s.strip("\"'")
 
-                # if the string ends with \c escape, strip it
-                if s.endswith("\\c"):
-                    s = s[:-2]
+            # if the string ends with \c escape, strip it
+            if s.endswith("\\c"):
+                s = s[:-2]
 
-                self.write(codecs.escape_decode(s)[0])
+            self.write(codecs.escape_decode(s)[0])
 
 
 commands["/usr/bin/printf"] = Command_printf
@@ -247,9 +245,7 @@ commands["hostname"] = Command_hostname
 class Command_ps(HoneyPotCommand):
     def call(self):
         user = self.protocol.user.username
-        args = ""
-        if len(self.args):
-            args = self.args[0].strip()
+        args = self.args[0].strip() if len(self.args) else ""
         (
             _user,
             _pid,
@@ -263,8 +259,6 @@ class Command_ps(HoneyPotCommand):
             _time,
             _command,
         ) = list(range(11))
-        output_array = []
-
         output = (
             "%s".ljust(15 - len("USER")) % "USER",
             "%s".ljust(8 - len("PID")) % "PID",
@@ -278,7 +272,7 @@ class Command_ps(HoneyPotCommand):
             "%s".ljust(8 - len("TIME")) % "TIME",
             "%s".ljust(30 - len("COMMAND")) % "COMMAND",
         )
-        output_array.append(output)
+        output_array = [output]
         if self.protocol.user.server.process:
             for single_ps in self.protocol.user.server.process:
                 output = (
@@ -319,7 +313,7 @@ class Command_ps(HoneyPotCommand):
                 % user,
             )
             output_array.append(output)
-            process = process + 5
+            process += 5
             output = (
                 "%s".ljust(15 - len(user)) % user,
                 "%s".ljust(8 - len(str(process))) % str(process),
@@ -334,7 +328,7 @@ class Command_ps(HoneyPotCommand):
                 "%s".ljust(30 - len("bash")) % "-bash",
             )
             output_array.append(output)
-            process = process + 2
+            process += 2
             output = (
                 "%s".ljust(15 - len(user)) % user,
                 "%s".ljust(8 - len(str(process))) % str(process),
@@ -753,7 +747,7 @@ class Command_ps(HoneyPotCommand):
                     "Ss   ",
                     "Nov08",
                     "   0:00 ",
-                    "/usr/sbin/sshd: %s@pts/0" % user,
+                    f"/usr/sbin/sshd: {user}@pts/0",
                 ),
                 (
                     "%s".ljust(8) % user,
@@ -779,20 +773,17 @@ class Command_ps(HoneyPotCommand):
                     "R+   ",
                     "04:32",
                     "   0:00 ",
-                    "ps %s" % " ".join(self.args),
+                    f'ps {" ".join(self.args)}',
                 ),
             ]
 
+
         output = output_array
         for i in range(len(output_array)):
-            if i != 0:
-                if "a" not in args and output_array[i][_user].strip() != user:
+            if i != 0 and "a" not in args:
+                if output_array[i][_user].strip() != user:
                     continue
-                elif (
-                    "a" not in args
-                    and "x" not in args
-                    and output_array[i][_tty].strip() != "pts/0"
-                ):
+                elif "x" not in args and output_array[i][_tty].strip() != "pts/0":
                     continue
             line = [_pid, _tty, _time, _command]
             if "a" in args or "x" in args:
@@ -831,9 +822,7 @@ class Command_id(HoneyPotCommand):
     def call(self):
         u = self.protocol.user
         self.write(
-            "uid={}({}) gid={}({}) groups={}({})\n".format(
-                u.uid, u.username, u.gid, u.username, u.gid, u.username
-            )
+            f"uid={u.uid}({u.username}) gid={u.gid}({u.username}) groups={u.gid}({u.username})\n"
         )
 
 
@@ -963,10 +952,8 @@ class Command_history(HoneyPotCommand):
                 self.protocol.historyLines = []
                 self.protocol.historyPosition = 0
                 return
-            count = 1
-            for line in self.protocol.historyLines:
+            for count, line in enumerate(self.protocol.historyLines, start=1):
                 self.write(f" {str(count).rjust(4)}  {line}\n")
-                count += 1
         except Exception:
             # Non-interactive shell, do nothing
             pass
@@ -978,7 +965,7 @@ commands["history"] = Command_history
 class Command_date(HoneyPotCommand):
     def call(self):
         time = datetime.datetime.utcnow()
-        self.write("{}\n".format(time.strftime("%a %b %d %H:%M:%S UTC %Y")))
+        self.write(f'{time.strftime("%a %b %d %H:%M:%S UTC %Y")}\n')
 
 
 commands["/bin/date"] = Command_date
@@ -991,7 +978,7 @@ class Command_yes(HoneyPotCommand):
 
     def y(self):
         if len(self.args):
-            self.write("{}\n".format(" ".join(self.args)))
+            self.write(f'{" ".join(self.args)}\n')
         else:
             self.write("y\n")
         self.scheduled = reactor.callLater(0.01, self.y)
@@ -1045,12 +1032,11 @@ commands["sh"] = Command_sh
 class Command_php(HoneyPotCommand):
     def start(self):
         if not len(self.args):
-            pass
-        elif self.args[0] == "-v":
+            return
+        if self.args[0] == "-v":
             output = ("PHP 5.3.5 (cli)", "Copyright (c) 1997-2010 The PHP Group")
             for line in output:
                 self.write(f"{line}\n")
-            self.exit()
         elif self.args[0] == "-h":
             output = [
                 "Usage: php [options] [-f] <file> [--] [args...]",
@@ -1094,9 +1080,7 @@ class Command_php(HoneyPotCommand):
             ]
             for line in output:
                 self.write(f"{line}\n")
-            self.exit()
-        else:
-            self.exit()
+        self.exit()
 
     def lineReceived(self, line):
         log.msg(

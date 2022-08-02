@@ -76,7 +76,7 @@ def create_guest(connection, mac_address, guest_unique_id):
 
     guest_xml = backend_pool.util.read_file(configuration_file)
     guest_config = guest_xml.format(
-        guest_name="cowrie-" + version_tag + "_" + guest_unique_id,
+        guest_name=f"cowrie-{version_tag}_{guest_unique_id}",
         disk_image=disk_img,
         base_image=base_image,
         kernel_image=kernel_image,
@@ -86,6 +86,7 @@ def create_guest(connection, mac_address, guest_unique_id):
         mac_address=mac_address,
         network_name="cowrie",
     )
+
 
     try:
         dom = connection.createXML(guest_config, 0)

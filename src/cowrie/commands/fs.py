@@ -61,9 +61,7 @@ class Command_grep(HoneyPotCommand):
             return
 
         self.n = 10
-        if self.args[0] == ">":
-            pass
-        else:
+        if self.args[0] != ">":
             try:
                 optlist, args = getopt.getopt(
                     self.args, "abcDEFGHhIiJLlmnOoPqRSsUVvwxZA:B:C:e:f:"
@@ -121,34 +119,31 @@ class Command_tail(HoneyPotCommand):
 
     def tail_application(self, contents):
         contentsplit = contents.split(b"\n")
-        lines = int(len(contentsplit))
+        lines = len(contentsplit)
         if lines < self.n:
             self.n = lines - 1
-        i = 0
-        for j in range((lines - self.n - 1), lines):
+        for i, j in enumerate(range((lines - self.n - 1), lines)):
             self.writeBytes(contentsplit[j])
             if i < self.n:
                 self.write("\n")
-            i += 1
 
     def start(self):
         self.n = 10
         if not self.args or self.args[0] == ">":
             return
-        else:
-            try:
-                optlist, args = getopt.getopt(self.args, "n:")
-            except getopt.GetoptError as err:
-                self.errorWrite(f"tail: invalid option -- '{err.opt}'\n")
-                self.exit()
-                return
+        try:
+            optlist, args = getopt.getopt(self.args, "n:")
+        except getopt.GetoptError as err:
+            self.errorWrite(f"tail: invalid option -- '{err.opt}'\n")
+            self.exit()
+            return
 
-            for opt in optlist:
-                if opt[0] == "-n":
-                    if not opt[1].isdigit():
-                        self.errorWrite(f"tail: illegal offset -- {opt[1]}\n")
-                    else:
-                        self.n = int(opt[1])
+        for opt in optlist:
+            if opt[0] == "-n":
+                if opt[1].isdigit():
+                    self.n = int(opt[1])
+                else:
+                    self.errorWrite(f"tail: illegal offset -- {opt[1]}\n")
         if not self.input_data:
             files = self.check_arguments("tail", args)
             for pname in files:
@@ -183,12 +178,10 @@ class Command_head(HoneyPotCommand):
     n: int = 10
 
     def head_application(self, contents):
-        i = 0
         contentsplit = contents.split(b"\n")
-        for line in contentsplit:
+        for i, line in enumerate(contentsplit):
             if i < self.n:
                 self.writeBytes(line + b"\n")
-            i += 1
 
     def head_get_file_contents(self, filename):
         try:
@@ -203,21 +196,20 @@ class Command_head(HoneyPotCommand):
         self.n = 10
         if not self.args or self.args[0] == ">":
             return
-        else:
-            try:
-                optlist, args = getopt.getopt(self.args, "n:")
-            except getopt.GetoptError as err:
-                self.errorWrite(f"head: invalid option -- '{err.opt}'\n")
-                self.exit()
-                return
+        try:
+            optlist, args = getopt.getopt(self.args, "n:")
+        except getopt.GetoptError as err:
+            self.errorWrite(f"head: invalid option -- '{err.opt}'\n")
+            self.exit()
+            return
 
-            for opt in optlist:
-                if opt[0] == "-n":
-                    if not opt[1].isdigit():
-                        self.errorWrite(f"head: illegal offset -- {opt[1]}\n")
-                    else:
-                        self.n = int(opt[1])
+        for opt in optlist:
+            if opt[0] == "-n":
+                if opt[1].isdigit():
+                    self.n = int(opt[1])
 
+                else:
+                    self.errorWrite(f"head: illegal offset -- {opt[1]}\n")
         if not self.input_data:
             files = self.check_arguments("head", args)
             for pname in files:
@@ -369,11 +361,7 @@ or available locally via: info '(coreutils) rm invocation'\n"""
             for i in dir[:]:
                 if i[fs.A_NAME] == basename:
                     if i[fs.A_TYPE] == fs.T_DIR and not recursive:
-                        self.errorWrite(
-                            "rm: cannot remove `{}': Is a directory\n".format(
-                                i[fs.A_NAME]
-                            )
-                        )
+                        self.errorWrite(f"rm: cannot remove `{i[fs.A_NAME]}': Is a directory\n")
                     else:
                         dir.remove(i)
                         if verbose:
@@ -632,7 +620,7 @@ class Command_touch(HoneyPotCommand):
                 # FIXME: modify the timestamp here
                 continue
             # can't touch in special directories
-            if any([pname.startswith(_p) for _p in fs.SPECIAL_PATHS]):
+            if any(pname.startswith(_p) for _p in fs.SPECIAL_PATHS):
                 self.errorWrite(f"touch: cannot touch `{pname}`: Permission denied\n")
                 return
 

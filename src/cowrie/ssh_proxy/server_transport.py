@@ -219,28 +219,25 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             m = re.match(br"SSH-(\d+.\d+)-(.*)", self.otherVersionString)
             if m is None:
                 log.msg(
-                    "Bad protocol version identification: {}".format(
-                        repr(self.otherVersionString)
-                    )
+                    f"Bad protocol version identification: {repr(self.otherVersionString)}"
                 )
+
                 if self.transport:
                     self.transport.write(b"Protocol mismatch.\n")
                     self.transport.loseConnection()
                 return
             else:
                 self.gotVersion = True
-                remote_version = m.group(1)
+                remote_version = m[1]
                 if remote_version not in self.supportedVersions:
                     self._unsupportedVersionReceived(None)
                     return
                 i = self.buf.index(b"\n")
                 self.buf = self.buf[i + 1 :]
                 self.sendKexInit()
-        packet = self.getPacket()
-        while packet:
-            message_num = ord(packet[0:1])
+        while packet := self.getPacket():
+            message_num = ord(packet[:1])
             self.dispatchMessage(message_num, packet[1:])
-            packet = self.getPacket()
 
     def dispatchMessage(self, message_num, payload):
         # overriden dispatchMessage sets services, we do that here too then
@@ -264,10 +261,12 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         """
         Override because OpenSSH pads with 0 on KEXINIT
         """
-        if self._keyExchangeState != self._KEY_EXCHANGE_NONE:
-            if not self._allowedKeyExchangeMessageType(messageType):
-                self._blockedByKeyExchange.append((messageType, payload))
-                return
+        if (
+            self._keyExchangeState != self._KEY_EXCHANGE_NONE
+            and not self._allowedKeyExchangeMessageType(messageType)
+        ):
+            self._blockedByKeyExchange.append((messageType, payload))
+            return
 
         payload = chr(messageType).encode() + payload
         if self.outgoingCompression:
@@ -425,8 +424,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             # wait till backend connects to send packets to them
             log.msg("Connection to backend not ready, buffering packet from frontend")
             self.delayedPackets.append([message_num, payload])
+        elif len(self.delayedPackets) > 0:
+            self.delayedPackets.append([message_num, payload])
         else:
-            if len(self.delayedPackets) > 0:
-                self.delayedPackets.append([message_num, payload])
-            else:
-                self.sshParse.parse_num_packet("[SERVER]", message_num, payload)
+            self.sshParse.parse_num_packet("[SERVER]", message_num, payload)

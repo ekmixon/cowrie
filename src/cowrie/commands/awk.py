@@ -34,10 +34,9 @@ class Command_awk(HoneyPotCommand):
             optlist, args = getopt.gnu_getopt(self.args, "Fvf", ["version"])
         except getopt.GetoptError as err:
             self.errorWrite(
-                "awk: invalid option -- '{}'\nTry 'awk --help' for more information.\n".format(
-                    err.opt
-                )
+                f"awk: invalid option -- '{err.opt}'\nTry 'awk --help' for more information.\n"
             )
+
             self.exit()
             return
 
@@ -50,9 +49,6 @@ class Command_awk(HoneyPotCommand):
                 self.version()
                 self.exit()
                 return
-            elif o in ("-n", "--number"):
-                pass
-
         # first argument is program (generally between quotes if contains spaces)
         # second and onward arguments are files to operate on
 
@@ -76,8 +72,7 @@ class Command_awk(HoneyPotCommand):
                     continue
 
                 try:
-                    contents = self.fs.file_contents(pname)
-                    if contents:
+                    if contents := self.fs.file_contents(pname):
                         self.output(contents)
                     else:
                         raise FileNotFound
@@ -94,12 +89,9 @@ class Command_awk(HoneyPotCommand):
         { }
         /regex/ { }
         """
-        code = []
         re1 = r"\s*(\/(?P<pattern>\S+)\/\s+)?\{\s*(?P<code>[^\}]+)\}\s*"
         matches = re.findall(re1, program)
-        for m in matches:
-            code.append({"regex": m[1], "code": m[2]})
-        return code
+        return [{"regex": m[1], "code": m[2]} for m in matches]
 
     def awk_print(self, words):
         """

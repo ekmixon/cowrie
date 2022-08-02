@@ -133,8 +133,9 @@ class Command_gcc(HoneyPotCommand):
 
             # Schedule call to make it more time consuming and real
             self.scheduled = reactor.callLater(
-                timeout, self.generate_file(output_file if output_file else "a.out")
+                timeout, self.generate_file(output_file or "a.out")
             )
+
         else:
             self.no_files()
 
@@ -191,23 +192,20 @@ gcc version {} (Debian {}-5)""".format(
     def generate_file(self, outfile):
         data = b""
         # TODO: make sure it is written to temp file, not downloads
-        tmp_fname = "{}_{}_{}_{}".format(
-            time.strftime("%Y%m%d%H%M%S"),
-            self.protocol.getProtoTransport().transportId,
-            self.protocol.terminal.transport.session.id,
-            re.sub("[^A-Za-z0-9]", "_", outfile),
-        )
+        tmp_fname = f'{time.strftime("%Y%m%d%H%M%S")}_{self.protocol.getProtoTransport().transportId}_{self.protocol.terminal.transport.session.id}_{re.sub("[^A-Za-z0-9]", "_", outfile)}'
+
         safeoutfile = os.path.join(
             CowrieConfig.get("honeypot", "download_path"), tmp_fname
         )
 
         # Data contains random garbage from an actual file, so when
         # catting the file, you'll see some 'real' compiled data
-        for i in range(random.randint(3, 15)):
-            if random.randint(1, 3) == 1:
-                data = data + Command_gcc.RANDOM_DATA[::-1]
-            else:
-                data = data + Command_gcc.RANDOM_DATA
+        for _ in range(random.randint(3, 15)):
+            data = (
+                data + Command_gcc.RANDOM_DATA[::-1]
+                if random.randint(1, 3) == 1
+                else data + Command_gcc.RANDOM_DATA
+            )
 
         # Write random data
         with open(safeoutfile, "wb") as f:
@@ -221,7 +219,6 @@ gcc version {} (Debian {}-5)""".format(
         self.fs.update_realfile(self.fs.getfile(outfile), safeoutfile)
         self.fs.chown(outfile, self.protocol.user.uid, self.protocol.user.gid)
 
-        # Segfault command
         class segfault_command(HoneyPotCommand):
             def call(self):
                 self.write("Segmentation fault\n")
@@ -313,5 +310,5 @@ For bug reporting instructions, please see:
 commands["/usr/bin/gcc"] = Command_gcc
 commands["gcc"] = Command_gcc
 commands[
-    "/usr/bin/gcc-%s" % (".".join([str(v) for v in Command_gcc.APP_VERSION[:2]]))
+    f'/usr/bin/gcc-{".".join([str(v) for v in Command_gcc.APP_VERSION[:2]])}'
 ] = Command_gcc

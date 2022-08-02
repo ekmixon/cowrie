@@ -110,8 +110,7 @@ class Output(cowrie.core.output.Output):
                 self.meta[session]["ttylog"] = ttylog.read().encode().hex()
 
         elif entry["eventid"] == "cowrie.session.closed":
-            meta = self.meta.pop(session, None)
-            if meta:
+            if meta := self.meta.pop(session, None):
                 log.msg("publishing metadata to hpfeeds", logLevel=logging.DEBUG)
                 meta["endTime"] = entry["timestamp"]
                 meta["hashes"] = list(meta["hashes"])

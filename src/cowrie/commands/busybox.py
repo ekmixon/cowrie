@@ -72,8 +72,9 @@ class Command_busybox(HoneyPotCommand):
 
         line = " ".join(self.args)
         cmd = self.args[0]
-        cmdclass = self.protocol.getCommand(cmd, self.environ["PATH"].split(":"))
-        if cmdclass:
+        if cmdclass := self.protocol.getCommand(
+            cmd, self.environ["PATH"].split(":")
+        ):
             # log found command
             log.msg(
                 eventid="cowrie.command.success",

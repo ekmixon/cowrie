@@ -90,9 +90,7 @@ class Command_ssh(HoneyPotCommand):
                 self.exit()
         else:
             s = hashlib.md5(host.encode()).hexdigest()
-            self.ip = ".".join(
-                [str(int(x, 16)) for x in (s[0:2], s[2:4], s[4:6], s[6:8])]
-            )
+            self.ip = ".".join([str(int(x, 16)) for x in (s[:2], s[2:4], s[4:6], s[6:8])])
 
         self.host = host
         self.user = user

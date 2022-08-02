@@ -76,14 +76,11 @@ Written by Simon Josefsson.
                 )
                 self.exit()
                 return
-            elif opt[0] == "-d" or opt[0] == "--decode":
+            elif opt[0] in ["-d", "--decode"]:
                 self.mode = "d"
 
-            elif opt[0] == "-i" or opt[0] == "--ignore-garbage":
+            elif opt[0] in ["-i", "--ignore-garbage"]:
                 self.ignore = True
-
-            elif opt[0] == "-w" or opt[0] == "wrap":
-                pass
 
         if self.input_data:
             self.dojob(self.input_data)
@@ -103,7 +100,7 @@ Try 'base64 --help' for more information.
                 try:
                     self.dojob(self.fs.file_contents(pname))
                 except Exception as e:
-                    print(str(e))
+                    print(e)
                     self.errorWrite(f"base64: {args[0]}: No such file or directory\n")
             else:
                 self.errorWrite("base64: read error: Is a directory\n")

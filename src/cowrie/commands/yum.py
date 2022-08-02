@@ -196,15 +196,15 @@ Options:
             return
 
         global packages
-        packages = {}
-        for y in [re.sub("[^A-Za-z0-9]", "", x) for x in self.args[1:]]:
-            packages[y] = {
-                "version": "{}.{}-{}".format(
-                    random.choice([0, 1]), random.randint(1, 40), random.randint(1, 10)
-                ),
+        packages = {
+            y: {
+                "version": f"{random.choice([0, 1])}.{random.randint(1, 40)}-{random.randint(1, 10)}",
                 "size": random.randint(100, 900),
                 "release": f"{random.randint(1, 15)}.el7",
             }
+            for y in [re.sub("[^A-Za-z0-9]", "", x) for x in self.args[1:]]
+        }
+
         totalsize = sum(packages[x]["size"] for x in packages)
         repository = "base"
 
@@ -214,19 +214,17 @@ Options:
         )
         yield self.sleep(2.2)
         self.write(
-            "{} packages excluded due to repository priority protections\n".format(
-                random.randint(200, 300)
-            )
+            f"{random.randint(200, 300)} packages excluded due to repository priority protections\n"
         )
+
         yield self.sleep(0.9)
         self.write("Resolving Dependencies\n")
         self.write("--> Running transaction check\n")
-        for p in packages:
+        for p, value in packages.items():
             self.write(
-                "---> Package {}.{} {}.{} will be installed\n".format(
-                    p, packages[p]["version"], arch, packages[p]["release"]
-                )
+                f'---> Package {p}.{value["version"]} {arch}.{packages[p]["release"]} will be installed\n'
             )
+
         self.write("--> Finished Dependency Resolution\n")
         self.write("Beginning Kernel Module Plugin\n")
         self.write("Finished Kernel Module Plugin\n\n")
@@ -234,25 +232,19 @@ Options:
         self.write("Dependencies Resolved\n\n")
 
         # TODO: Is this working on all screens?
-        self.write("{}\n".format("=" * 176))
+        self.write(f'{"=" * 176}\n')
         # 195 characters
         self.write(" Package\t\t\tArch\t\t\tVersion\t\t\t\tRepository\t\t\tSize\n")
-        self.write("{}\n".format("=" * 176))
+        self.write(f'{"=" * 176}\n')
         self.write("Installing:\n")
-        for p in packages:
+        for p, value_ in packages.items():
             self.write(
-                " {}\t\t\t\t{}\t\t\t{}-{}\t\t\t{}\t\t\t\t{} k\n".format(
-                    p,
-                    arch,
-                    packages[p]["version"],
-                    packages[p]["release"],
-                    repository,
-                    packages[p]["size"],
-                )
+                f' {p}\t\t\t\t{arch}\t\t\t{value_["version"]}-{packages[p]["release"]}\t\t\t{repository}\t\t\t\t{packages[p]["size"]} k\n'
             )
+
         self.write("\n")
         self.write("Transaction Summary\n")
-        self.write("{}\n".format("=" * 176))
+        self.write(f'{"=" * 176}\n')
         self.write(f"Install  {len(packages)} Packages\n\n")
 
         self.write(f"Total download size: {totalsize} k\n")
@@ -271,46 +263,25 @@ Options:
         self.write("Running transaction test\n")
         self.write("Transaction test succeeded\n")
         self.write("Running transaction\n")
-        i = 1
-        for p in packages:
+        for i, p in enumerate(packages, start=1):
             self.write(
-                "  Installing : {}-{}-{}.{} \t\t\t\t {}/{} \n".format(
-                    p,
-                    packages[p]["version"],
-                    packages[p]["release"],
-                    arch,
-                    i,
-                    len(packages),
-                )
+                f'  Installing : {p}-{packages[p]["version"]}-{packages[p]["release"]}.{arch} \t\t\t\t {i}/{len(packages)} \n'
             )
+
             yield self.sleep(0.5, 1)
-            i += 1
-        i = 1
-        for p in packages:
+        for i, p in enumerate(packages, start=1):
             self.write(
-                "  Verifying : {}-{}-{}.{} \t\t\t\t {}/{} \n".format(
-                    p,
-                    packages[p]["version"],
-                    packages[p]["release"],
-                    arch,
-                    i,
-                    len(packages),
-                )
+                f'  Verifying : {p}-{packages[p]["version"]}-{packages[p]["release"]}.{arch} \t\t\t\t {i}/{len(packages)} \n'
             )
+
             yield self.sleep(0.5, 1)
-            i += 1
         self.write("\n")
         self.write("Installed:\n")
         for p in packages:
             self.write(
-                "  {}.{} {}:{}-{} \t\t".format(
-                    p,
-                    arch,
-                    random.randint(0, 2),
-                    packages[p]["version"],
-                    packages[p]["release"],
-                )
+                f'  {p}.{arch} {random.randint(0, 2)}:{packages[p]["version"]}-{packages[p]["release"]} \t\t'
             )
+
         self.write("\n")
         self.write("Complete!\n")
         self.exit()

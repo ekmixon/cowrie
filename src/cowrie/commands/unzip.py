@@ -65,7 +65,7 @@ class Command_unzip(HoneyPotCommand):
             )
             return
         if not self.protocol.fs.exists(path):
-            if not self.protocol.fs.exists(path + ".zip"):
+            if not self.protocol.fs.exists(f"{path}.zip"):
                 self.write(
                     "unzip:  cannot find or open {0}, {0}.zip or {0}.ZIP.\n".format(
                         filename
@@ -73,7 +73,7 @@ class Command_unzip(HoneyPotCommand):
                 )
                 return
             else:
-                path = path + ".zip"
+                path = f"{path}.zip"
 
         f = self.fs.getfile(path)
         if not f[A_REALFILE]:

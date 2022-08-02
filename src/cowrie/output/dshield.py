@@ -38,10 +38,7 @@ class Output(cowrie.core.output.Output):
         pass
 
     def write(self, entry):
-        if (
-            entry["eventid"] == "cowrie.login.success"
-            or entry["eventid"] == "cowrie.login.failed"
-        ):
+        if entry["eventid"] in ["cowrie.login.success", "cowrie.login.failed"]:
             date = dateutil.parser.parse(entry["timestamp"])
             self.batch.append(
                 {
@@ -132,12 +129,13 @@ class Output(cowrie.core.output.Output):
                     failed = True
                 sha1_local = hashlib.sha1()
                 sha1_local.update(log_output.encode("utf8"))
-                if sha1_match.group(1) != sha1_local.hexdigest():
+                if sha1_match[1] != sha1_local.hexdigest():
                     log.msg(
                         "dshield: ERROR: SHA1 Mismatch {} {} .".format(
-                            sha1_match.group(1), sha1_local.hexdigest()
+                            sha1_match[1], sha1_local.hexdigest()
                         )
                     )
+
                     failed = True
                 md5_regex = re.compile(r"<md5checksum>([^<]+)<\/md5checksum>")
                 md5_match = md5_regex.search(response)
@@ -146,12 +144,13 @@ class Output(cowrie.core.output.Output):
                     failed = True
                 md5_local = hashlib.md5()
                 md5_local.update(log_output.encode("utf8"))
-                if md5_match.group(1) != md5_local.hexdigest():
+                if md5_match[1] != md5_local.hexdigest():
                     log.msg(
                         "dshield: ERROR: MD5 Mismatch {} {} .".format(
-                            md5_match.group(1), md5_local.hexdigest()
+                            md5_match[1], md5_local.hexdigest()
                         )
                     )
+
                     failed = True
                 log.msg(
                     "dshield: SUCCESS: Sent {} bytes worth of data to secure.dshield.org".format(

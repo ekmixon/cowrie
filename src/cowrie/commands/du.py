@@ -80,11 +80,10 @@ or available locally via: info '(coreutils) du invocation'\n"""
         self.showHidden = False
         self.showDirectories = False
         path = self.protocol.cwd
-        args = self.args
-        if args:
-            if "-sh" == args[0]:
+        if args := self.args:
+            if args[0] == "-sh":
                 self.write("28K     .\n")
-            elif "--help" == args[0]:
+            elif args[0] == "--help":
                 self.write(self.message_help())
             else:
                 self.du_show(path)
@@ -117,8 +116,7 @@ or available locally via: info '(coreutils) du invocation'\n"""
             return
         for filename in filenames:
             if all:
-                isdir = self.protocol.fs.isdir(os.path.join(path, filename))
-                if isdir:
+                if isdir := self.protocol.fs.isdir(os.path.join(path, filename)):
                     filename = f"4       ./{filename}\n"
                     self.write(filename)
             else:

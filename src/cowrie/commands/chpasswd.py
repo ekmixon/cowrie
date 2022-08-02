@@ -50,7 +50,6 @@ class Command_chpasswd(HoneyPotCommand):
                             - update userDB.txt (???)
                             - updte auth_random.json (if in use)
                         """
-                        pass
                 c += 1
         except Exception:
             self.write(f"chpasswd: line {c}: missing new password\n")
@@ -79,9 +78,7 @@ class Command_chpasswd(HoneyPotCommand):
                     self.help()
                     self.exit()
 
-        if not self.input_data:
-            pass
-        else:
+        if self.input_data:
             self.chpasswd_application(self.input_data)
             self.exit()
 

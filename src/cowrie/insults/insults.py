@@ -44,10 +44,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
 
         insults.ServerProtocol.__init__(self, prot, *a, **kw)
 
-        if prot is protocol.HoneyPotExecProtocol:
-            self.type = "e"  # Execcmd
-        else:
-            self.type = "i"  # Interactive
+        self.type = "e" if prot is protocol.HoneyPotExecProtocol else "i"
 
     def getSessionId(self):
         transportId = self.transport.session.conn.transport.transportId
@@ -59,23 +56,14 @@ class LoggingServerProtocol(insults.ServerProtocol):
         self.startTime = time.time()
 
         if self.ttylogEnabled:
-            self.ttylogFile = "{}/{}-{}-{}{}.log".format(
-                self.ttylogPath,
-                time.strftime("%Y%m%d-%H%M%S"),
-                transportId,
-                channelId,
-                self.type,
-            )
+            self.ttylogFile = f'{self.ttylogPath}/{time.strftime("%Y%m%d-%H%M%S")}-{transportId}-{channelId}{self.type}.log'
+
             ttylog.ttylog_open(self.ttylogFile, self.startTime)
             self.ttylogOpen = True
             self.ttylogSize = 0
 
-        self.stdinlogFile = "{}/{}-{}-{}-stdin.log".format(
-            self.downloadPath,
-            time.strftime("%Y%m%d-%H%M%S"),
-            transportId,
-            channelId,
-        )
+        self.stdinlogFile = f'{self.downloadPath}/{time.strftime("%Y%m%d-%H%M%S")}-{transportId}-{channelId}-stdin.log'
+
 
         if self.type == "e":
             self.stdinlogOpen = True
@@ -173,11 +161,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
 
                 rf = rp[0]
 
-                if rp[1]:
-                    url = rp[1]
-                else:
-                    url = rf[rf.find("redir_") + len("redir_") :]
-
+                url = rp[1] or rf[rf.find("redir_") + len("redir_") :]
                 try:
                     if not os.path.exists(rf):
                         continue

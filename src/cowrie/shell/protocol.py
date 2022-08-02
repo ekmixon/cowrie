@@ -59,10 +59,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.sessionno = None
         self.factory = None
 
-        if self.fs.exists(user.avatar.home):
-            self.cwd = user.avatar.home
-        else:
-            self.cwd = "/"
+        self.cwd = user.avatar.home if self.fs.exists(user.avatar.home) else "/"
         self.data = None
         self.password_input = False
         self.cmdstack = []
@@ -148,7 +145,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         """
         Check if cmd (the argument of a command) is a command, too.
         """
-        return True if cmd in self.commands else False
+        return cmd in self.commands
 
     def getCommand(self, cmd, paths):
         if not len(cmd.strip()):
@@ -167,8 +164,9 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
                     break
 
         txt = os.path.normpath(
-            "{}/txtcmds/{}".format(CowrieConfig.get("honeypot", "share_path"), path)
+            f'{CowrieConfig.get("honeypot", "share_path")}/txtcmds/{path}'
         )
+
         if os.path.exists(txt) and os.path.isfile(txt):
             return self.txtcmd(txt)
 
@@ -206,8 +204,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         Uptime
         """
         pt = self.getProtoTransport()
-        r = time.time() - pt.factory.starttime
-        return r
+        return time.time() - pt.factory.starttime
 
     def eofReceived(self):
         # Shell received EOF, nicely exit
@@ -342,7 +339,7 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
 
     def handle_CTRL_K(self):
         self.terminal.eraseToLineEnd()
-        self.lineBuffer = self.lineBuffer[0 : self.lineBufferIndex]
+        self.lineBuffer = self.lineBuffer[:self.lineBufferIndex]
 
     def handle_CTRL_L(self):
         """

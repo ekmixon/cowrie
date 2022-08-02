@@ -47,9 +47,7 @@ def sizeof_fmt(num):
 
 # Luciano Ramalho @ http://code.activestate.com/recipes/498181/
 def splitthousands(s, sep=","):
-    if len(s) <= 3:
-        return s
-    return splitthousands(s[:-3], sep) + sep + s[-3:]
+    return s if len(s) <= 3 else splitthousands(s[:-3], sep) + sep + s[-3:]
 
 
 class Command_wget(HoneyPotCommand):
@@ -90,9 +88,8 @@ class Command_wget(HoneyPotCommand):
         # for some reason getopt doesn't recognize "-O -"
         # use try..except for the case if passed command is malformed
         try:
-            if not self.outfile:
-                if "-O" in args:
-                    self.outfile = args[args.index("-O") + 1]
+            if not self.outfile and "-O" in args:
+                self.outfile = args[args.index("-O") + 1]
         except Exception:
             pass
 
@@ -113,10 +110,9 @@ class Command_wget(HoneyPotCommand):
             path = os.path.dirname(self.outfile)
             if not path or not self.fs.exists(path) or not self.fs.isdir(path):
                 self.errorWrite(
-                    "wget: {}: Cannot open: No such file or directory\n".format(
-                        self.outfile
-                    )
+                    f"wget: {self.outfile}: Cannot open: No such file or directory\n"
                 )
+
                 self.exit()
                 return
 
@@ -137,7 +133,7 @@ class Command_wget(HoneyPotCommand):
             scheme = parsed.scheme
             host = parsed.hostname.decode("utf8")
             port = parsed.port or (443 if scheme == b"https" else 80)
-            if scheme != b"http" and scheme != b"https":
+            if scheme not in [b"http", b"https"]:
                 raise NotImplementedError
             if not host:
                 return None
@@ -147,10 +143,9 @@ class Command_wget(HoneyPotCommand):
 
         if not self.quiet:
             self.errorWrite(
-                "--{}--  {}\n".format(
-                    time.strftime("%Y-%m-%d %H:%M:%S"), url.decode("utf8")
-                )
+                f'--{time.strftime("%Y-%m-%d %H:%M:%S")}--  {url.decode("utf8")}\n'
             )
+
             self.errorWrite(f"Connecting to {host}:{port}... connected.\n")
             self.errorWrite("HTTP request sent, awaiting response... ")
 
@@ -158,10 +153,9 @@ class Command_wget(HoneyPotCommand):
         try:
             if ipaddress.ip_address(host).is_private:
                 self.errorWrite(
-                    "Resolving {} ({})... failed: nodename nor servname provided, or not known.\n".format(
-                        host, host
-                    )
+                    f"Resolving {host} ({host})... failed: nodename nor servname provided, or not known.\n"
                 )
+
                 self.errorWrite(f"wget: unable to resolve host address ‘{host}’\n")
                 return None
         except ValueError:
@@ -261,16 +255,11 @@ class Command_wget(HoneyPotCommand):
                 and hasattr(error, "webMessage")
             ):  # exceptions
                 self.errorWrite(
-                    "{} ERROR {}: {}\n".format(
-                        time.strftime("%Y-%m-%d %T"),
-                        error.webStatus.decode(),
-                        error.webMessage.decode("utf8"),
-                    )
+                    f'{time.strftime("%Y-%m-%d %T")} ERROR {error.webStatus.decode()}: {error.webMessage.decode("utf8")}\n'
                 )
+
             else:
-                self.errorWrite(
-                    "{} ERROR 404: Not Found.\n".format(time.strftime("%Y-%m-%d %T"))
-                )
+                self.errorWrite(f'{time.strftime("%Y-%m-%d %T")} ERROR 404: Not Found.\n')
 
             # prevent cowrie from crashing if the terminal have been already destroyed
             try:
@@ -330,17 +319,13 @@ class HTTPProgressDownloader(client.HTTPDownloader):
                 self.contenttype = "text/whatever"
             self.currentlength = 0.0
 
-            if self.totallength > 0:
-                if not self.quiet:
+            if not self.quiet:
+                if self.totallength > 0:
                     self.wget.errorWrite(
-                        "Length: {} ({}) [{}]\n".format(
-                            self.totallength,
-                            sizeof_fmt(self.totallength),
-                            self.contenttype,
-                        )
+                        f"Length: {self.totallength} ({sizeof_fmt(self.totallength)}) [{self.contenttype}]\n"
                     )
-            else:
-                if not self.quiet:
+
+                else:
                     self.wget.errorWrite(f"Length: unspecified [{self.contenttype}]\n")
             if 0 < self.wget.limit_size < self.totallength:
                 log.msg(f"Not saving URL ({self.wget.url}) due to file size limit")
@@ -373,11 +358,12 @@ class HTTPProgressDownloader(client.HTTPDownloader):
             eta = (self.totallength - self.currentlength) / self.speed
             s = "\r%s [%s] %s %dK/s  eta %s" % (
                 spercent.rjust(3),
-                ("%s>" % (int(39.0 / 100.0 * percent) * "=")).ljust(39),
-                splitthousands(str(int(self.currentlength))).ljust(12),
+                f'{int(39.0 / 100.0 * percent) * "="}>'.ljust(39),
+                splitthousands(str(self.currentlength)).ljust(12),
                 self.speed / 1000,
                 tdiff(eta),
             )
+
             if not self.quiet:
                 self.wget.errorWrite(s.ljust(self.proglen))
             self.proglen = len(s)
@@ -389,13 +375,16 @@ class HTTPProgressDownloader(client.HTTPDownloader):
             return client.HTTPDownloader.pageEnd(self)
         if not self.quiet:
             self.wget.errorWrite(
-                "\r100%%[%s] %s %dK/s"
-                % (
-                    "%s>" % (38 * "="),
-                    splitthousands(str(int(self.totallength))).ljust(12),
-                    self.speed / 1000,
+                (
+                    "\r100%%[%s] %s %dK/s"
+                    % (
+                        f'{38 * "="}>',
+                        splitthousands(str(int(self.totallength))).ljust(12),
+                        self.speed / 1000,
+                    )
                 )
             )
+
             self.wget.errorWrite("\n\n")
             self.wget.errorWrite(
                 "%s (%d KB/s) - `%s' saved [%d/%d]\n\n"

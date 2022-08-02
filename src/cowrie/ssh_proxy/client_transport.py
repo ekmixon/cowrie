@@ -172,15 +172,14 @@ class BackendSSHTransport(transport.SSHClientTransport, TimeoutMixin):
             # wait till frontend connects and authenticates to send packets to them
             log.msg("Connection to client not ready, buffering packet from backend")
             self.delayedPackets.append((message_num, payload))
-        else:
-            if len(self.delayedPackets) > 0:
-                self.delayedPackets.append((message_num, payload))
-                for packet in self.delayedPackets:
-                    self.factory.server.sshParse.parse_num_packet(
-                        "[CLIENT]", packet[0], packet[1]
-                    )
-                self.delayedPackets = []
-            else:
+        elif len(self.delayedPackets) > 0:
+            self.delayedPackets.append((message_num, payload))
+            for packet in self.delayedPackets:
                 self.factory.server.sshParse.parse_num_packet(
-                    "[CLIENT]", message_num, payload
+                    "[CLIENT]", packet[0], packet[1]
                 )
+            self.delayedPackets = []
+        else:
+            self.factory.server.sshParse.parse_num_packet(
+                "[CLIENT]", message_num, payload
+            )

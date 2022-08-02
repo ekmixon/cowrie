@@ -74,11 +74,7 @@ class Output(cowrie.core.output.Output):
                 fileName = entry["shasum"]
             else:
                 b = os.path.basename(p)
-                if b == "":
-                    fileName = entry["shasum"]
-                else:
-                    fileName = b
-
+                fileName = entry["shasum"] if b == "" else b
             if (
                 self.cuckoo_force
                 or self.cuckoo_check_if_dup(os.path.basename(entry["outfile"])) is False
@@ -132,10 +128,9 @@ class Output(cowrie.core.output.Output):
             )
             if res and res.ok:
                 print(
-                    "Cuckoo Request: {}, Task created with ID: {}".format(
-                        res.status_code, res.json()["task_id"]
-                    )
+                    f'Cuckoo Request: {res.status_code}, Task created with ID: {res.json()["task_id"]}'
                 )
+
             else:
                 print(f"Cuckoo Request failed: {res.status_code}")
         except Exception as e:
@@ -155,10 +150,9 @@ class Output(cowrie.core.output.Output):
             )
             if res and res.ok:
                 print(
-                    "Cuckoo Request: {}, Task created with ID: {}".format(
-                        res.status_code, res.json()["task_id"]
-                    )
+                    f'Cuckoo Request: {res.status_code}, Task created with ID: {res.json()["task_id"]}'
                 )
+
             else:
                 print(f"Cuckoo Request failed: {res.status_code}")
         except Exception as e:

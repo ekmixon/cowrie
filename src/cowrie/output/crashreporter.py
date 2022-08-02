@@ -72,6 +72,6 @@ class Output(cowrie.core.output.Output):
             )
             content = yield r.text()
             if self.debug:
-                print("crashreport: " + content)
+                print(f"crashreport: {content}")
         except Exception as e:
-            print("crashreporter failed" + repr(e))
+            print(f"crashreporter failed{repr(e)}")

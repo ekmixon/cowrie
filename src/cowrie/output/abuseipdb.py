@@ -67,7 +67,7 @@ class Output(output.Output):
             "output_abuseipdb", "tolerance_attempts", fallback=10
         )
         self.state_path = CowrieConfig.get("output_abuseipdb", "dump_path")
-        self.state_path = Path(*(d for d in self.state_path.split("/")))
+        self.state_path = Path(*iter(self.state_path.split("/")))
         self.state_dump = self.state_path / DUMP_FILE
 
         self.logbook = LogBook(self.tolerance_attempts, self.state_dump)
@@ -100,9 +100,7 @@ class Output(output.Output):
             tolerated = self.logbook.pop("tolerated")
 
         except (pickle.UnpicklingError, FileNotFoundError, KeyError):
-            if self.state_path.exists():
-                pass
-            else:
+            if not self.state_path.exists():
                 # If we don't already have an abuseipdb directory, let's make
                 # one with the necessary permissions now.
                 Path(self.state_path).mkdir(mode=0o700, parents=False, exist_ok=False)
@@ -242,10 +240,7 @@ class LogBook(dict):
     def find_and_delete_empty_entries(self):
         # Search and destroy method. Iterates over dict, appends k to delete_me
         # where v is an empty list.
-        delete_me = []
-        for k in self:
-            if not self[k]:
-                delete_me.append(k)
+        delete_me = [k for k in self if not self[k]]
         self.delete_entries(delete_me)
 
     def delete_entries(self, delete_me):
@@ -283,11 +278,7 @@ class LogBook(dict):
             except AttributeError:
                 pass
 
-        if self.sleeping:
-            t = self.sleep_until
-        else:
-            t = time()
-
+        t = self.sleep_until if self.sleeping else time()
         delete_me = []
         for k in self:
             if self.can_rereport(k, t):
@@ -358,9 +349,9 @@ class Reporter:
         params = {
             "ip": ip,
             "categories": "18,22",
-            "comment": "Cowrie Honeypot: Unauthorised SSH/Telnet login attempt "
-            'with user "{}" at {}'.format(uname, t),
+            "comment": f'Cowrie Honeypot: Unauthorised SSH/Telnet login attempt with user "{uname}" at {t}',
         }
+
 
         self.http_request(params)
 
@@ -375,9 +366,9 @@ class Reporter:
         params = {
             "ip": ip,
             "categories": "18,22",
-            "comment": "Cowrie Honeypot: {} unauthorised SSH/Telnet login attempts "
-            "between {} and {}".format(self.attempts, t_first, t_last),
+            "comment": f"Cowrie Honeypot: {self.attempts} unauthorised SSH/Telnet login attempts between {t_first} and {t_last}",
         }
+
 
         self.http_request(params)
 
@@ -445,7 +436,7 @@ class Reporter:
             j = yield response.json()
             reason = j["errors"][0]["detail"]
 
-        except (KeyError, JSONDecodeError):
+        except KeyError:
             reason = "No other information provided or unexpected response"
 
         self.log_response_failed(params["ip"], response.code, reason)

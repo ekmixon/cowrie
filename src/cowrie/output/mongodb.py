@@ -14,15 +14,13 @@ class Output(cowrie.core.output.Output):
 
     def insert_one(self, collection, event):
         try:
-            object_id = collection.insert_one(event).inserted_id
-            return object_id
+            return collection.insert_one(event).inserted_id
         except Exception as e:
             log.msg(f"mongo error - {e}")
 
     def update_one(self, collection, session, doc):
         try:
-            object_id = collection.update({"session": session}, doc)
-            return object_id
+            return collection.update({"session": session}, doc)
         except Exception as e:
             log.msg(f"mongo error - {e}")
 
@@ -87,29 +85,17 @@ class Output(cowrie.core.output.Output):
             self.insert_one(self.col_downloads, entry)
 
         elif eventid == "cowrie.client.version":
-            doc = self.col_sessions.find_one({"session": entry["session"]})
-            if doc:
+            if doc := self.col_sessions.find_one({"session": entry["session"]}):
                 doc["sshversion"] = entry["version"]
                 self.update_one(self.col_sessions, entry["session"], doc)
-            else:
-                pass
-
         elif eventid == "cowrie.client.size":
-            doc = self.col_sessions.find_one({"session": entry["session"]})
-            if doc:
-                doc["termsize"] = "{}x{}".format(entry["width"], entry["height"])
+            if doc := self.col_sessions.find_one({"session": entry["session"]}):
+                doc["termsize"] = f'{entry["width"]}x{entry["height"]}'
                 self.update_one(self.col_sessions, entry["session"], doc)
-            else:
-                pass
-
         elif eventid == "cowrie.session.closed":
-            doc = self.col_sessions.find_one({"session": entry["session"]})
-            if doc:
+            if doc := self.col_sessions.find_one({"session": entry["session"]}):
                 doc["endtime"] = entry["timestamp"]
                 self.update_one(self.col_sessions, entry["session"], doc)
-            else:
-                pass
-
         elif eventid == "cowrie.log.closed":
             # ToDo Compress to opimise the space and if your sending to remote db
             with open(entry["ttylog"]) as ttylog:
@@ -126,6 +112,5 @@ class Output(cowrie.core.output.Output):
         elif eventid == "cowrie.direct-tcpip.data":
             self.insert_one(self.col_ipforwardsdata, entry)
 
-        # Catch any other event types
         else:
             self.insert_one(self.col_event, entry)

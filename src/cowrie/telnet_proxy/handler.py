@@ -94,9 +94,10 @@ class TelnetHandler:
         self.ttylogSize = 0
 
         if self.ttylogEnabled:
-            self.ttylogFile = "{}/telnet-{}.log".format(
-                self.ttylogPath, time.strftime("%Y%m%d-%H%M%S")
+            self.ttylogFile = (
+                f'{self.ttylogPath}/telnet-{time.strftime("%Y%m%d-%H%M%S")}.log'
             )
+
             ttylog.ttylog_open(self.ttylogFile, self.startTime)
 
     def setClient(self, client):
@@ -303,15 +304,13 @@ class TelnetHandler:
         It looks for authentication phases (password input and username input), as well as data that
         may need to be processed specially.
         """
-        hasPassword = re.search(self.passwordPromptRegex, self.currentData)
-        if hasPassword:
+        if hasPassword := re.search(self.passwordPromptRegex, self.currentData):
             log.msg("Password prompt from backend")
             self.authStarted = True
             self.inputingPassword = True
             self.passwordState = b""
 
-        hasLogin = re.search(self.usernamePromptRegex, self.currentData)
-        if hasLogin:
+        if hasLogin := re.search(self.usernamePromptRegex, self.currentData):
             log.msg("Login prompt from backend")
             self.authStarted = True
             self.inputingLogin = True
@@ -325,9 +324,8 @@ class TelnetHandler:
         """
         # login username is sent in channel negotiation to match the client's username
         negotiationLoginPattern = re.compile(self.usernameInNegotiationRegex)
-        hasNegotiationLogin = negotiationLoginPattern.search(self.currentData)
-        if hasNegotiationLogin:
-            self.usernameState = hasNegotiationLogin.group(2)
+        if hasNegotiationLogin := negotiationLoginPattern.search(self.currentData):
+            self.usernameState = hasNegotiationLogin[2]
             log.msg(
                 f"Detected username {self.usernameState.decode()} in negotiation, spoofing for backend..."
             )

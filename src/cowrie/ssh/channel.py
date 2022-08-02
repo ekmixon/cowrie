@@ -52,12 +52,8 @@ class CowrieSSHChannel(channel.SSHChannel):
 
     def channelOpen(self, specificData: bytes) -> None:
         self.startTime = time.time()
-        self.ttylogFile = "{}/tty/{}-{}-{}.log".format(
-            self.ttylogPath,
-            time.strftime("%Y%m%d-%H%M%S"),
-            self.conn.transport.transportId,
-            self.id,
-        )
+        self.ttylogFile = f'{self.ttylogPath}/tty/{time.strftime("%Y%m%d-%H%M%S")}-{self.conn.transport.transportId}-{self.id}.log'
+
         log.msg(
             eventid="cowrie.log.open",
             ttylog=self.ttylogFile,

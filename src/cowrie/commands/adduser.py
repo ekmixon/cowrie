@@ -77,9 +77,8 @@ class Command_adduser(HoneyPotCommand):
             return
         if line[0] == O_Q:
             return
-        else:
-            self.item += 1
-            self.schedule_next()
+        self.item += 1
+        self.schedule_next()
 
     def schedule_next(self):
         self.scheduled = reactor.callLater(0.5 + random.random() * 1, self.do_output)

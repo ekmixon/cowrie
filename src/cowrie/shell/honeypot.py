@@ -52,7 +52,7 @@ class HoneyPotShell:
                     break
 
                 # For now, treat && and || same as ;, just execute without checking return code
-                if tok == "&&" or tok == "||":
+                if tok in {"&&", "||"}:
                     if tokens:
                         self.cmdpending.append(tokens)
                         tokens = []
@@ -84,7 +84,7 @@ class HoneyPotShell:
                     envRex = re.compile(r"^\$([_a-zA-Z0-9]+)$")
                     envSearch = envRex.search(tok)
                     if envSearch is not None:
-                        envMatch = envSearch.group(1)
+                        envMatch = envSearch[1]
                         if envMatch in list(self.environ.keys()):
                             tok = self.environ[envMatch]
                         else:
@@ -93,7 +93,7 @@ class HoneyPotShell:
                     envRex = re.compile(r"^\${([_a-zA-Z0-9]+)}$")
                     envSearch = envRex.search(tok)
                     if envSearch is not None:
-                        envMatch = envSearch.group(1)
+                        envMatch = envSearch[1]
                         if envMatch in list(self.environ.keys()):
                             tok = self.environ[envMatch]
                         else:
@@ -162,10 +162,10 @@ class HoneyPotShell:
                 opening_count += 1
                 pos += 2
             else:
-                if opening_count > closing_count and pos == len(cmd_expr) - 1:
+                if pos == len(cmd_expr) - 1:
                     if self.lexer:
                         tok = self.lexer.get_token()
-                        cmd_expr = cmd_expr + " " + tok
+                        cmd_expr = f"{cmd_expr} {tok}"
                 elif opening_count == closing_count:
                     result += cmd_expr[pos]
                 pos += 1
@@ -174,11 +174,7 @@ class HoneyPotShell:
 
     def run_subshell_command(self, cmd_expr):
         # extract the command from $(...) or `...` or (...) expression
-        if cmd_expr.startswith("$("):
-            cmd = cmd_expr[2:-1]
-        else:
-            cmd = cmd_expr[1:-1]
-
+        cmd = cmd_expr[2:-1] if cmd_expr.startswith("$(") else cmd_expr[1:-1]
         # instantiate new shell with redirect output
         self.protocol.cmdstack.append(
             HoneyPotShell(self.protocol, interactive=False, redirect=True)
@@ -232,8 +228,6 @@ class HoneyPotShell:
                         self.protocol.terminal.transport.processEnded(ret)
                     else:
                         return
-            else:
-                pass  # command with pipes
             return
 
         cmdAndArgs = self.cmdpending.pop(0)
@@ -343,18 +337,14 @@ class HoneyPotShell:
                 cwd = "~"
             elif (
                 len(cwd) > (homelen + 1)
-                and cwd[: (homelen + 1)] == self.protocol.user.avatar.home + "/"
+                and cwd[: (homelen + 1)] == f"{self.protocol.user.avatar.home}/"
             ):
-                cwd = "~" + cwd[homelen:]
+                cwd = f"~{cwd[homelen:]}"
 
             # Example: [root@svr03 ~]#   (More of a "CentOS" feel)
             # Example: root@svr03:~#     (More of a "Debian" feel)
             prompt = f"{self.protocol.user.username}@{self.protocol.hostname}:{cwd}"
-            if not self.protocol.user.uid:
-                prompt += "# "  # "Root" user
-            else:
-                prompt += "$ "  # "Non-Root" user
-
+            prompt += "$ " if self.protocol.user.uid else "# "
         self.protocol.terminal.write(prompt.encode("ascii"))
         self.protocol.ps = (prompt.encode("ascii"), b"> ")
 
@@ -387,10 +377,7 @@ class HoneyPotShell:
             return
 
         line: bytes = b"".join(self.protocol.lineBuffer)
-        if line[-1:] == b" ":
-            clue = ""
-        else:
-            clue = line.split()[-1].decode("utf8")
+        clue = "" if line[-1:] == b" " else line.split()[-1].decode("utf8")
         # clue now contains the string to complete or is empty.
         # line contains the buffer as bytes
 
@@ -421,7 +408,7 @@ class HoneyPotShell:
             return
 
         # Clear early so we can call showPrompt if needed
-        for i in range(self.protocol.lineBufferIndex):
+        for _ in range(self.protocol.lineBufferIndex):
             self.protocol.terminal.cursorBackward()
             self.protocol.terminal.deleteCharacter()
 
@@ -430,11 +417,7 @@ class HoneyPotShell:
             newbuf = " ".join(
                 line.decode("utf8").split()[:-1] + [f"{basedir}{files[0][fs.A_NAME]}"]
             )
-            if files[0][fs.A_TYPE] == fs.T_DIR:
-                newbuf += "/"
-            else:
-                newbuf += " "
-            newbyt = newbuf.encode("utf8")
+            newbuf += "/" if files[0][fs.A_TYPE] == fs.T_DIR else " "
         else:
             if os.path.basename(clue):
                 prefix = os.path.commonprefix([x[fs.A_NAME] for x in files])
@@ -442,8 +425,7 @@ class HoneyPotShell:
                 prefix = ""
             first = line.decode("utf8").split(" ")[:-1]
             newbuf = " ".join(first + [f"{basedir}{prefix}"])
-            newbyt = newbuf.encode("utf8")
-            if newbyt == b"".join(self.protocol.lineBuffer):
+            if newbuf.encode("utf8") == b"".join(self.protocol.lineBuffer):
                 self.protocol.terminal.write(b"\n")
                 maxlen = max(len(x[fs.A_NAME]) for x in files) + 1
                 perline = int(self.protocol.user.windowSize[1] / (maxlen + 1))
@@ -459,7 +441,8 @@ class HoneyPotShell:
                 self.protocol.terminal.write(b"\n")
                 self.showPrompt()
 
-        self.protocol.lineBuffer = [y for x, y in enumerate(iterbytes(newbyt))]
+        newbyt = newbuf.encode("utf8")
+        self.protocol.lineBuffer = list(iterbytes(newbyt))
         self.protocol.lineBufferIndex = len(self.protocol.lineBuffer)
         self.protocol.terminal.write(newbyt)
 
@@ -497,19 +480,19 @@ class StdOutStdErrEmulationProtocol:
         """
         self.data = data
 
-        if not self.next_command:
-            if not self.redirect:
-                if self.protocol is not None and self.protocol.terminal is not None:
-                    self.protocol.terminal.write(data)
-                else:
-                    log.msg("Connection was probably lost. Could not write to terminal")
-            else:
-                self.redirected_data += self.data
-        else:
+        if self.next_command:
             if self.next_command.input_data is None:
                 self.next_command.input_data = self.data
             else:
                 self.next_command.input_data += self.data
+
+        elif not self.redirect:
+            if self.protocol is not None and self.protocol.terminal is not None:
+                self.protocol.terminal.write(data)
+            else:
+                log.msg("Connection was probably lost. Could not write to terminal")
+        else:
+            self.redirected_data += self.data
 
     def insert_command(self, command):
         """

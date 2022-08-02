@@ -67,12 +67,12 @@ class Command_chmod(HoneyPotCommand):
             self.write("chmod: missing operand\n" + TRY_CHMOD_HELP_MSG)
             return
         if mode and not files:
-            self.write(f"chmod: missing operand after ‘{mode}’\n" + TRY_CHMOD_HELP_MSG)
+            self.write(f"chmod: missing operand after ‘{mode}’\n{TRY_CHMOD_HELP_MSG}")
             return
 
         # mode has to match the regex
         if not re.fullmatch(MODE_REGEX, mode):
-            self.write(f"chmod: invalid mode: ‘{mode}’\n" + TRY_CHMOD_HELP_MSG)
+            self.write(f"chmod: invalid mode: ‘{mode}’\n{TRY_CHMOD_HELP_MSG}")
             return
 
         # go through the list of files and check whether they exist
@@ -123,12 +123,11 @@ class Command_chmod(HoneyPotCommand):
             failed_opt = err.msg.split(" ")[1]
             if failed_opt.startswith("--"):
                 self.errorWrite(
-                    f"chmod: unrecognized option '--{err.opt}'\n" + TRY_CHMOD_HELP_MSG
+                    f"chmod: unrecognized option '--{err.opt}'\n{TRY_CHMOD_HELP_MSG}"
                 )
+
             else:
-                self.errorWrite(
-                    f"chmod: invalid option -- '{err.opt}'\n" + TRY_CHMOD_HELP_MSG
-                )
+                self.errorWrite(f"chmod: invalid option -- '{err.opt}'\n{TRY_CHMOD_HELP_MSG}")
             return [], None, [], True
 
         # if mode was not found before, use the first arg as mode

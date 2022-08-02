@@ -56,8 +56,8 @@ def create_network(connection, network_table):
 
     # generate a host entry for every possible guest in this network (253 entries)
     it = iter(network_table)
-    for guest_id in range(0, 253):
-        vm_name = "vm" + str(guest_id)
+    for guest_id in range(253):
+        vm_name = f"vm{str(guest_id)}"
 
         key = next(it)
         hosts += template_host.format(

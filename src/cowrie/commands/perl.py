@@ -79,8 +79,10 @@ class Command_perl(HoneyPotCommand):
             )
         except getopt.GetoptError as err:
             self.write(
-                "Unrecognized switch: -" + err.opt + " (-h will show valid options).\n"
+                f"Unrecognized switch: -{err.opt}"
+                + " (-h will show valid options).\n"
             )
+
             self.exit()
 
         # Parse options
@@ -97,18 +99,12 @@ class Command_perl(HoneyPotCommand):
         for value in args:
             sourcefile = self.fs.resolve_path(value, self.protocol.cwd)
 
-            if self.fs.exists(sourcefile):
-                self.exit()
-            else:
+            if not self.fs.exists(sourcefile):
                 self.write(
-                    'Can\'t open perl script "{}": No such file or directory\n'.format(
-                        value
-                    )
+                    f"""Can\'t open perl script "{value}": No such file or directory\n"""
                 )
-                self.exit()
 
-        if not len(self.args):
-            pass
+            self.exit()
 
     def lineReceived(self, line):
         log.msg(

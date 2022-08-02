@@ -59,9 +59,6 @@ class Command_crontab(HoneyPotCommand):
             self.exit()
             return
 
-        if len(self.args):
-            pass
-
     def lineReceived(self, line):
         log.msg(
             eventid="cowrie.command.input",

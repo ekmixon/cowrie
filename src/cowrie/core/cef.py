@@ -68,26 +68,21 @@ def formatCef(logentry: dict[str, str]) -> str:
         "proto": "tcp",
     }
 
-    if logentry["eventid"] == "cowrie.session.connect":
+    if cefName == "cowrie.session.connect":
         cefExtensions["spt"] = logentry["src_port"]
         cefExtensions["dpt"] = logentry["dst_port"]
         cefExtensions["src"] = logentry["src_ip"]
         cefExtensions["dst"] = logentry["dst_ip"]
-    elif logentry["eventid"] == "cowrie.login.success":
+    elif cefName == "cowrie.login.success":
         cefExtensions["duser"] = logentry["username"]
         cefExtensions["outcome"] = "success"
-    elif logentry["eventid"] == "cowrie.login.failed":
+    elif cefName == "cowrie.login.failed":
         cefExtensions["duser"] = logentry["username"]
         cefExtensions["outcome"] = "failed"
-    elif logentry["eventid"] == "cowrie.file.file_download":
+    elif cefName in ["cowrie.file.file_download", "cowrie.file.file_upload"]:
         cefExtensions["filehash"] = logentry["filehash"]
         cefExtensions["filePath"] = logentry["filename"]
         cefExtensions["fsize"] = logentry["size"]
-    elif logentry["eventid"] == "cowrie.file.file_upload":
-        cefExtensions["filehash"] = logentry["filehash"]
-        cefExtensions["filePath"] = logentry["filename"]
-        cefExtensions["fsize"] = logentry["size"]
-
     # 'out' 'outcome'  request, rt
 
     cefList = []
@@ -97,7 +92,7 @@ def formatCef(logentry: dict[str, str]) -> str:
 
     cefExtension = " ".join(cefList)
 
-    cefString = (
+    return (
         "CEF:0|"
         + cefVendor
         + "|"
@@ -113,5 +108,3 @@ def formatCef(logentry: dict[str, str]) -> str:
         + "|"
         + cefExtension
     )
-
-    return cefString

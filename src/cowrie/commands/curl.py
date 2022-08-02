@@ -199,11 +199,11 @@ class Command_curl(HoneyPotCommand):
             return
 
         for opt in optlist:
-            if opt[0] == "-h" or opt[0] == "--help":
+            if opt[0] in ["-h", "--help"]:
                 self.write(CURL_HELP)
                 self.exit()
                 return
-            elif opt[0] == "-s" or opt[0] == "--silent":
+            elif opt[0] in ["-s", "--silent"]:
                 self.silent = True
 
         if len(args):
@@ -217,7 +217,7 @@ class Command_curl(HoneyPotCommand):
             return
 
         if "://" not in url:
-            url = "http://" + url
+            url = f"http://{url}"
         urldata = compat.urllib_parse.urlparse(url)
 
         outfile = None
@@ -261,7 +261,7 @@ class Command_curl(HoneyPotCommand):
             scheme = parsed.scheme
             host: str = parsed.hostname.decode("utf8")
             port: int = parsed.port or (443 if scheme == b"https" else 80)
-            if scheme != b"http" and scheme != b"https":
+            if scheme not in [b"http", b"https"]:
                 raise NotImplementedError
         except Exception:
             self.errorWrite(
@@ -431,10 +431,9 @@ class HTTPProgressDownloader(client.HTTPDownloader):
 
         if self.fakeoutfile:
             self.curl.write(
-                "\r100  {}  100  {}    0     0  {}      0 --:--:-- --:--:-- --:--:-- {}\n".format(
-                    self.currentlength, self.currentlength, 63673, 65181
-                )
+                f"\r100  {self.currentlength}  100  {self.currentlength}    0     0  63673      0 --:--:-- --:--:-- --:--:-- 65181\n"
             )
+
             self.curl.fs.mkfile(self.fakeoutfile, 0, 0, self.totallength, 33188)
 
         return client.HTTPDownloader.pageEnd(self)

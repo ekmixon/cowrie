@@ -86,7 +86,7 @@ class Output(cowrie.core.output.Output):
 
         j = yield response.json()
         if self.debug:
-            log.msg("GreyNoise: debug: " + repr(j))
+            log.msg(f"GreyNoise: debug: {repr(j)}")
 
         if j["message"] == "Success":
             message(j)

@@ -71,7 +71,7 @@ class PoolService:
         )
 
         # detect invalid config
-        if not self.ssh_port > 0 and not self.telnet_port > 0:
+        if self.ssh_port <= 0 and self.telnet_port <= 0:
             log.msg(
                 eventid="cowrie.backend_pool.service",
                 format="Invalid configuration: one of SSH or Telnet ports must be defined!",
@@ -166,10 +166,7 @@ class PoolService:
         return len([g for g in self.guests if g["state"] != "destroyed"])
 
     def is_ip_free(self, ip):
-        for guest in self.guests:
-            if guest["guest_ip"] == ip:
-                return False
-        return True
+        return all(guest["guest_ip"] != ip for guest in self.guests)
 
     def has_connectivity(self, ip):
         """

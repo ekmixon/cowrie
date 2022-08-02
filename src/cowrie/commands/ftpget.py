@@ -39,7 +39,6 @@ class FTP(ftplib.FTP):
         return self.welcome
 
     def ntransfercmd(self, cmd, rest=None):
-        size = None
         if self.passiveserver:
             host, port = self.makepasv()
             conn = socket.create_connection(
@@ -71,8 +70,7 @@ class FTP(ftplib.FTP):
                     conn.settimeout(self.timeout)
             finally:
                 sock.close()
-        if resp[:3] == "150":
-            size = ftplib.parse150(resp)
+        size = ftplib.parse150(resp) if resp[:3] == "150" else None
         return conn, size
 
 
@@ -155,10 +153,9 @@ Download a file via FTP
         path = os.path.dirname(fakeoutfile)
         if not path or not self.fs.exists(path) or not self.fs.isdir(path):
             self.write(
-                "ftpget: can't open '{}': No such file or directory".format(
-                    self.local_file
-                )
+                f"ftpget: can't open '{self.local_file}': No such file or directory"
             )
+
             self.exit()
             return
 
@@ -239,10 +236,9 @@ Download a file via FTP
             ftp.connect(host=self.host, port=self.port, timeout=30)
         except Exception as e:
             log.msg(
-                "FTP connect failed: host={}, port={}, err={}".format(
-                    self.host, self.port, str(e)
-                )
+                f"FTP connect failed: host={self.host}, port={self.port}, err={str(e)}"
             )
+
             self.write("ftpget: can't connect to remote host: Connection refused\n")
             return False
 
@@ -262,10 +258,9 @@ Download a file via FTP
             ftp.login(user=self.username, passwd=self.password)
         except Exception as e:
             log.msg(
-                "FTP login failed: user={}, passwd={}, err={}".format(
-                    self.username, self.password, str(e)
-                )
+                f"FTP login failed: user={self.username}, passwd={self.password}, err={str(e)}"
             )
+
             self.write(f"ftpget: unexpected server response to USER: {str(e)}\n")
             try:
                 ftp.quit()

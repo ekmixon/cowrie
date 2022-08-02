@@ -61,7 +61,7 @@ class PoolClient(Protocol):
             log.err("Parent not set, discarding data from pool")
             return
 
-        response = struct.unpack("!cI", data[0:5])
+        response = struct.unpack("!cI", data[:5])
 
         res_op = response[0]
         res_code = response[1]

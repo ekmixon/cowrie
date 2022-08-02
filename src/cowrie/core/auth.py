@@ -46,9 +46,7 @@ class UserDB:
 
         dblines: list[str]
         try:
-            with open(
-                "{}/userdb.txt".format(CowrieConfig.get("honeypot", "etc_path"))
-            ) as db:
+            with open(f'{CowrieConfig.get("honeypot", "etc_path")}/userdb.txt') as db:
                 dblines = db.readlines()
         except OSError:
             log.msg("Could not read etc/userdb.txt, default database activated")
@@ -72,9 +70,10 @@ class UserDB:
             passwd: Union[bytes, Pattern[bytes]]
             login, passwd = credentials
 
-            if self.match_rule(login, thelogin):
-                if self.match_rule(passwd, thepasswd):
-                    return policy
+            if self.match_rule(login, thelogin) and self.match_rule(
+                passwd, thepasswd
+            ):
+                return policy
 
         return False
 
@@ -93,9 +92,8 @@ class UserDB:
         @param login: rule
         @type login: bytes
         """
-        res = re.match(br"/(.+)/(i)?$", rule)
-        if res:
-            return re.compile(res.group(1), re.IGNORECASE if res.group(2) else 0)
+        if res := re.match(br"/(.+)/(i)?$", rule):
+            return re.compile(res[1], re.IGNORECASE if res[2] else 0)
 
         return rule
 
@@ -146,9 +144,10 @@ class AuthRandom:
             log.msg(f"maxtry < mintry, adjusting maxtry to: {self.maxtry}")
 
         self.uservar: dict[Any, Any] = {}
-        self.uservar_file: str = "{}/auth_random.json".format(
-            CowrieConfig.get("honeypot", "state_path")
+        self.uservar_file: str = (
+            f'{CowrieConfig.get("honeypot", "state_path")}/auth_random.json'
         )
+
         self.loadvars()
 
     def loadvars(self) -> None:
@@ -183,7 +182,7 @@ class AuthRandom:
         """
 
         auth: bool = False
-        userpass: str = str(thelogin) + ":" + str(thepasswd)
+        userpass: str = f"{thelogin}:{thepasswd}"
 
         if "cache" not in self.uservar:
             self.uservar["cache"] = []
@@ -199,22 +198,21 @@ class AuthRandom:
                 ipinfo["max"] = 1
                 ipinfo["user"] = str(thelogin)
                 ipinfo["pw"] = str(thepasswd)
-                auth = True
                 self.savevars()
+                auth = True
                 return auth
             else:
                 ipinfo["max"] = randint(self.mintry, self.maxtry)
-                log.msg("first time for {}, need: {}".format(src_ip, ipinfo["max"]))
-        else:
-            if userpass in cache:
-                ipinfo = self.uservar[src_ip]
-                log.msg(f"Found cached: {userpass}")
-                ipinfo["max"] = 1
-                ipinfo["user"] = str(thelogin)
-                ipinfo["pw"] = str(thepasswd)
-                auth = True
-                self.savevars()
-                return auth
+                log.msg(f'first time for {src_ip}, need: {ipinfo["max"]}')
+        elif userpass in cache:
+            ipinfo = self.uservar[src_ip]
+            log.msg(f"Found cached: {userpass}")
+            ipinfo["max"] = 1
+            ipinfo["user"] = str(thelogin)
+            ipinfo["pw"] = str(thepasswd)
+            auth = True
+            self.savevars()
+            return auth
 
         ipinfo = self.uservar[src_ip]
 
@@ -247,16 +245,13 @@ class AuthRandom:
             if len(cache) > self.maxcache:
                 cache.pop(0)
             auth = True
-        # Returning after successful login
         elif attempts > need:
             if "user" not in ipinfo or "pw" not in ipinfo:
                 log.msg("return, but username or password not set!!!")
                 ipinfo["tried"].append(userpass)
                 ipinfo["try"] = 1
             else:
-                log.msg(
-                    "login return, expect: [{}/{}]".format(ipinfo["user"], ipinfo["pw"])
-                )
+                log.msg(f'login return, expect: [{ipinfo["user"]}/{ipinfo["pw"]}]')
                 if thelogin == ipinfo["user"] and str(thepasswd) == ipinfo["pw"]:
                     auth = True
         self.savevars()

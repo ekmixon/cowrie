@@ -59,17 +59,16 @@ class CowrieUser(avatar.ConchUser):
         """
         Override this to get more info on the unknown channel
         """
-        klass = self.channelLookup.get(channelType, None)
-        if not klass:
-            raise ConchError(
-                OPEN_UNKNOWN_CHANNEL_TYPE, f"unknown channel: {channelType}"
-            )
-        else:
+        if klass := self.channelLookup.get(channelType, None):
             return klass(
                 remoteWindow=windowSize,
                 remoteMaxPacket=maxPacket,
                 data=data,
                 avatar=self,
+            )
+        else:
+            raise ConchError(
+                OPEN_UNKNOWN_CHANNEL_TYPE, f"unknown channel: {channelType}"
             )
 
 

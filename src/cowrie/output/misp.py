@@ -47,8 +47,9 @@ class Output(cowrie.core.output.Output):
         misp_url = CowrieConfig.get("output_misp", "base_url")
         misp_key = CowrieConfig.get("output_misp", "api_key")
         misp_verifycert = (
-            "true" == CowrieConfig.get("output_misp", "verify_cert").lower()
+            CowrieConfig.get("output_misp", "verify_cert").lower() == "true"
         )
+
         self.misp_api = PyMISP(
             url=misp_url, key=misp_key, ssl=misp_verifycert, debug=False
         )
@@ -68,8 +69,7 @@ class Output(cowrie.core.output.Output):
         Push file download to MISP
         """
         if entry["eventid"] == "cowrie.session.file_download":
-            file_sha_attrib = self.find_attribute("sha256", entry["shasum"])
-            if file_sha_attrib:
+            if file_sha_attrib := self.find_attribute("sha256", entry["shasum"]):
                 # file is known, add sighting!
                 if self.debug:
                     log.msg("File known, add sighting")
@@ -89,10 +89,7 @@ class Output(cowrie.core.output.Output):
             controller="attributes", type_attribute=attribute_type, value=searchterm
         )
 
-        if result["Attribute"]:
-            return result["Attribute"][0]
-        else:
-            return None
+        return result["Attribute"][0] if result["Attribute"] else None
 
     @ignore_warnings
     def create_new_event(self, entry):
@@ -100,7 +97,7 @@ class Output(cowrie.core.output.Output):
         attribute.type = "malware-sample"
         attribute.value = entry["shasum"]
         attribute.data = Path(entry["outfile"])
-        attribute.comment = "File uploaded to Cowrie ({})".format(entry["sensor"])
+        attribute.comment = f'File uploaded to Cowrie ({entry["sensor"]})'
         attribute.expand = "binary"
         if "url" in entry:
             attributeURL = MISPAttribute()
@@ -118,7 +115,7 @@ class Output(cowrie.core.output.Output):
         attributeDT.type = "datetime"
         attributeDT.value = entry["timestamp"]
         event = MISPEvent()
-        event.info = "File uploaded to Cowrie ({})".format(entry["sensor"])
+        event.info = f'File uploaded to Cowrie ({entry["sensor"]})'
         event.add_tag("tlp:white")
         event.attributes = [attribute, attributeURL, attributeIP, attributeDT]
         event.run_expansions()
@@ -131,5 +128,5 @@ class Output(cowrie.core.output.Output):
     @ignore_warnings
     def add_sighting(self, entry, attribute):
         sighting = MISPSighting()
-        sighting.source = "{} (Cowrie)".format(entry["sensor"])
+        sighting.source = f'{entry["sensor"]} (Cowrie)'
         self.misp_api.add_sighting(sighting, attribute)

@@ -100,5 +100,4 @@ class Output(cowrie.core.output.Output):
             ptr = ipaddress.ip_address(addr).reverse_pointer
         except ValueError:
             return None
-        d = client.lookupPointer(ptr, timeout=self.timeout)
-        return d
+        return client.lookupPointer(ptr, timeout=self.timeout)

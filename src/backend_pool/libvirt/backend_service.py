@@ -87,15 +87,11 @@ class LibvirtBackendService:
         """
         Get a MAC and IP that are not being used by any guest.
         """
-        # Try to find a free pair 500 times.
-        retries = 0
-        while retries < 500:
+        for _ in range(500):
             mac = random.choice(list(self.network_table.keys()))
             ip = self.network_table[mac]
             if ip_tester(ip):
                 return mac, ip
-
-            retries += 1
 
         raise LibvirtError()
 

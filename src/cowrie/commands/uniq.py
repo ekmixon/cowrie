@@ -79,7 +79,7 @@ class Command_uniq(HoneyPotCommand):
         self.exit()
 
     def grep_input(self, line):
-        if not line == self.last_line:
+        if line != self.last_line:
             self.writeBytes(line + b"\n")
             self.last_line = line
 

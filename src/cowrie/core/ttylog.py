@@ -88,5 +88,4 @@ def ttylog_inputhash(logfile: str) -> str:
                 continue
             inputbytes = inputbytes + data
 
-        shasum: str = hashlib.sha256(inputbytes).hexdigest()
-        return shasum
+        return hashlib.sha256(inputbytes).hexdigest()

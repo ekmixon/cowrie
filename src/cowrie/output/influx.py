@@ -44,7 +44,7 @@ class Output(cowrie.core.output.Output):
             dbname = "cowrie"
 
         retention_policy_duration_default = "12w"
-        retention_policy_name = dbname + "_retention_policy"
+        retention_policy_name = f"{dbname}_retention_policy"
 
         if CowrieConfig.has_option("output_influx", "retention_policy_duration"):
             retention_policy_duration = CowrieConfig.get(
@@ -54,11 +54,9 @@ class Output(cowrie.core.output.Output):
             match = re.search(r"^\d+[dhmw]{1}$", retention_policy_duration)
             if not match:
                 log.msg(
-                    (
-                        "output_influx: invalid retention policy."
-                        "Using default '{}'.."
-                    ).format(retention_policy_duration)
+                    f"output_influx: invalid retention policy.Using default '{retention_policy_duration}'.."
                 )
+
                 retention_policy_duration = retention_policy_duration_default
         else:
             retention_policy_duration = retention_policy_duration_default
@@ -214,7 +212,4 @@ class Output(cowrie.core.output.Output):
         result = self.client.write_points([m])
 
         if not result:
-            log.msg(
-                "output_influx: error when writing '{}' measurement"
-                "in the db.".format(eventid)
-            )
+            log.msg(f"output_influx: error when writing '{eventid}' measurementin the db.")

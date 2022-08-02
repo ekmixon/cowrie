@@ -30,7 +30,6 @@ class Command_ls(HoneyPotCommand):
 
     def call(self):
         path = self.protocol.cwd
-        paths = []
         self.showHidden = False
         self.showDirectories = False
         func = self.do_ls_normal
@@ -55,14 +54,14 @@ class Command_ls(HoneyPotCommand):
             if x in ("-d"):
                 self.showDirectories = True
 
-        for arg in args:
-            paths.append(self.protocol.fs.resolve_path(arg, self.protocol.cwd))
-
-        if not paths:
-            func(path)
-        else:
+        if paths := [
+            self.protocol.fs.resolve_path(arg, self.protocol.cwd) for arg in args
+        ]:
             for path in paths:
                 func(path)
+
+        else:
+            func(path)
 
     def get_dir_files(self, path):
         try:
@@ -121,10 +120,9 @@ class Command_ls(HoneyPotCommand):
         if len(files):
             filesize_str_extent = max(len(str(x[fs.A_SIZE])) for x in files)
 
-        user_name_str_extent = 0
-        if len(files):
             user_name_str_extent = max(len(self.uid2name(x[fs.A_UID])) for x in files)
-
+        else:
+            user_name_str_extent = 0
         group_name_str_extent = 0
         if len(files):
             group_name_str_extent = max(len(self.gid2name(x[fs.A_GID])) for x in files)
@@ -178,15 +176,8 @@ class Command_ls(HoneyPotCommand):
             perms = "".join(perms)
             ctime = time.localtime(file[fs.A_CTIME])
 
-            line = "{} 1 {} {} {} {} {}{}".format(
-                perms,
-                self.uid2name(file[fs.A_UID]).ljust(user_name_str_extent),
-                self.gid2name(file[fs.A_GID]).ljust(group_name_str_extent),
-                str(file[fs.A_SIZE]).rjust(filesize_str_extent),
-                time.strftime("%Y-%m-%d %H:%M", ctime),
-                file[fs.A_NAME],
-                linktarget,
-            )
+            line = f'{perms} 1 {self.uid2name(file[fs.A_UID]).ljust(user_name_str_extent)} {self.gid2name(file[fs.A_GID]).ljust(group_name_str_extent)} {str(file[fs.A_SIZE]).rjust(filesize_str_extent)} {time.strftime("%Y-%m-%d %H:%M", ctime)} {file[fs.A_NAME]}{linktarget}'
+
 
             self.write(f"{line}\n")
 

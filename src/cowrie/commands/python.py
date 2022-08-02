@@ -87,38 +87,28 @@ class Command_python(HoneyPotCommand):
 
         # Parse options
         for o, a in opts:
-            if o in "-V":
+            if (
+                o in "-V"
+                or o not in "--help"
+                and o not in "-h"
+                and o in "--version"
+            ):
                 self.version()
                 self.exit()
                 return
-            elif o in "--help":
+            elif o in "--help" or o in "-h":
                 self.help()
                 self.exit()
                 return
-            elif o in "-h":
-                self.help()
-                self.exit()
-                return
-            elif o in "--version":
-                self.version()
-                self.exit()
-                return
-
         for value in args:
             sourcefile = self.fs.resolve_path(value, self.protocol.cwd)
 
-            if self.fs.exists(sourcefile) or value == "-":
-                self.exit()
-            else:
-
+            if not self.fs.exists(sourcefile) and value != "-":
                 self.write(
                     "python: can't open file '%s': [Errno 2] No such file or directory\n"
                     % (value)
                 )
-                self.exit()
-
-        if not len(self.args):
-            pass
+            self.exit()
 
     def lineReceived(self, line):
         log.msg(

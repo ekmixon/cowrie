@@ -30,8 +30,9 @@ from cowrie.core.config import CowrieConfig
     A_CONTENTS,
     A_TARGET,
     A_REALFILE,
-) = list(range(0, 10))
-T_LINK, T_DIR, T_FILE, T_BLK, T_CHR, T_SOCK, T_FIFO = list(range(0, 7))
+) = list(range(10))
+
+T_LINK, T_DIR, T_FILE, T_BLK, T_CHR, T_SOCK, T_FIFO = list(range(7))
 
 
 SPECIAL_PATHS: list[str] = ["/sys", "/proc", "/dev/pts"]
@@ -153,7 +154,7 @@ class HoneyPotFilesystem:
         for path, directories, filenames in os.walk(honeyfs_path):
             for filename in filenames:
                 realfile_path: str = os.path.join(path, filename)
-                virtual_path: str = "/" + os.path.relpath(realfile_path, honeyfs_path)
+                virtual_path: str = f"/{os.path.relpath(realfile_path, honeyfs_path)}"
 
                 f: Optional[list[Any]] = self.getfile(
                     virtual_path, follow_symlinks=False
@@ -168,11 +169,7 @@ class HoneyPotFilesystem:
         cwdpieces: list[str] = []
 
         # If a path within home directory is specified, convert it to an absolute path
-        if pathspec.startswith("~/"):
-            path = self.home + pathspec[1:]
-        else:
-            path = pathspec
-
+        path = self.home + pathspec[1:] if pathspec.startswith("~/") else pathspec
         pieces = path.rstrip("/").split("/")
 
         if path[0] == "/":
@@ -180,9 +177,7 @@ class HoneyPotFilesystem:
         else:
             cwdpieces = [x for x in cwd.split("/") if len(x) and x is not None]
 
-        while 1:
-            if not len(pieces):
-                break
+        while 1 and len(pieces):
             piece = pieces.pop(0)
             if piece == "..":
                 if len(cwdpieces):
@@ -192,7 +187,7 @@ class HoneyPotFilesystem:
                 continue
             cwdpieces.append(piece)
 
-        return "/{}".format("/".join(cwdpieces))
+        return f'/{"/".join(cwdpieces)}'
 
     def resolve_path_wc(self, path: str, cwd: str) -> list[str]:
         """
@@ -255,9 +250,7 @@ class HoneyPotFilesystem:
         Returns False for broken symbolic links.
         """
         f: Optional[list[Any]] = self.getfile(path, follow_symlinks=True)
-        if f is not None:
-            return True
-        return False
+        return f is not None
 
     def lexists(self, path: str) -> bool:
         """
@@ -265,9 +258,7 @@ class HoneyPotFilesystem:
         Returns True for broken symbolic links.
         """
         f: Optional[list[Any]] = self.getfile(path, follow_symlinks=False)
-        if f is not None:
-            return True
-        return False
+        return f is not None
 
     def update_realfile(self, f: Any, realfile: str) -> None:
 
@@ -362,7 +353,7 @@ class HoneyPotFilesystem:
             ctime = time.time()
         _path: str = os.path.dirname(path)
 
-        if any([_path.startswith(_p) for _p in SPECIAL_PATHS]):
+        if any(_path.startswith(_p) for _p in SPECIAL_PATHS):
             raise PermissionDenied
 
         _dir = self.get_path(_path)
@@ -406,12 +397,7 @@ class HoneyPotFilesystem:
             f: Optional[list[Any]] = self.getfile(path)
         except Exception:
             return False
-        if f is None:
-            return False
-        if f[A_TYPE] == T_FILE:
-            return True
-        else:
-            return False
+        return False if f is None else f[A_TYPE] == T_FILE
 
     def islink(self, path: str) -> bool:
         """
@@ -423,12 +409,7 @@ class HoneyPotFilesystem:
             f: Optional[list[Any]] = self.getfile(path)
         except Exception:
             return False
-        if f is None:
-            return False
-        if f[A_TYPE] == T_LINK:
-            return True
-        else:
-            return False
+        return False if f is None else f[A_TYPE] == T_LINK
 
     def isdir(self, path: str) -> bool:
         """
@@ -441,12 +422,7 @@ class HoneyPotFilesystem:
             dir = self.getfile(path)
         except Exception:
             dir = None
-        if dir is None:
-            return False
-        if dir[A_TYPE] == T_DIR:
-            return True
-        else:
-            return False
+        return False if dir is None else dir[A_TYPE] == T_DIR
 
     """
     Below additions for SFTP support, try to keep functions here similar to os.*
@@ -473,11 +449,8 @@ class HoneyPotFilesystem:
         if openFlags & os.O_WRONLY == os.O_WRONLY or openFlags & os.O_RDWR == os.O_RDWR:
             # strip executable bit
             hostmode: int = mode & ~(111)
-            hostfile: str = "{}/{}_sftp_{}".format(
-                CowrieConfig.get("honeypot", "download_path"),
-                time.strftime("%Y%m%d-%H%M%S"),
-                re.sub("[^A-Za-z0-9]", "_", filename),
-            )
+            hostfile: str = f'{CowrieConfig.get("honeypot", "download_path")}/{time.strftime("%Y%m%d-%H%M%S")}_sftp_{re.sub("[^A-Za-z0-9]", "_", filename)}'
+
             self.mkfile(filename, 0, 0, 0, stat.S_IFREG | mode)
             fd = os.open(hostfile, openFlags, hostmode)
             self.update_realfile(self.getfile(filename), hostfile)
@@ -485,7 +458,6 @@ class HoneyPotFilesystem:
             self.filenames[fd] = filename
             return fd
 
-        # TODO: throw exception
         elif openFlags & os.O_RDONLY == os.O_RDONLY:
             return None
 
@@ -526,9 +498,7 @@ class HoneyPotFilesystem:
         os.close(fd)
 
     def lseek(self, fd: int, offset: int, whence: int) -> int:
-        if not fd:
-            return True
-        return os.lseek(fd, offset, whence)
+        return os.lseek(fd, offset, whence) if fd else True
 
     def mkdir2(self, path: str) -> None:
         """
@@ -599,8 +569,7 @@ class HoneyPotFilesystem:
         old: Optional[list[Any]] = self.getfile(oldpath)
         if not old:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
-        new = self.getfile(newpath)
-        if new:
+        if new := self.getfile(newpath):
             raise OSError(errno.EEXIST, os.strerror(errno.EEXIST))
 
         self.get_path(os.path.dirname(oldpath)).remove(old)
@@ -608,8 +577,7 @@ class HoneyPotFilesystem:
         self.get_path(os.path.dirname(newpath)).append(old)
 
     def listdir(self, path: str) -> list[str]:
-        names: list[str] = [x[A_NAME] for x in self.get_path(path)]
-        return names
+        return [x[A_NAME] for x in self.get_path(path)]
 
     def lstat(self, path: str) -> _statobj:
         return self.stat(path, follow_symlinks=False)

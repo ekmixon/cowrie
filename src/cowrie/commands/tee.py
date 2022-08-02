@@ -86,9 +86,6 @@ class Command_tee(HoneyPotCommand):
         """
         if "decode" in dir(input):
             input = input.decode("UTF-8")
-        if not isinstance(input, str):
-            pass
-
         lines = input.split("\n")
         if lines[-1] == "":
             lines.pop()

@@ -80,7 +80,7 @@ class Artifact:
         self.shasumFilename = os.path.join(self.artifactDir, self.shasum)
 
         if os.path.exists(self.shasumFilename):
-            log.msg("Not storing duplicate content " + self.shasum)
+            log.msg(f"Not storing duplicate content {self.shasum}")
             os.remove(self.fp.name)
         else:
             os.rename(self.fp.name, self.shasumFilename)

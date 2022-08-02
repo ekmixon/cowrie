@@ -35,8 +35,9 @@ from stat import (
     A_CONTENTS,
     A_TARGET,
     A_REALFILE,
-) = range(0, 10)
-T_LINK, T_DIR, T_FILE, T_BLK, T_CHR, T_SOCK, T_FIFO = range(0, 7)
+) = range(10)
+
+T_LINK, T_DIR, T_FILE, T_BLK, T_CHR, T_SOCK, T_FIFO = range(7)
 PROC = False
 VERBOSE = False
 
@@ -54,10 +55,7 @@ def logit(ftxt):
 
 
 def checkblacklist(ftxt):
-    for value in blacklist_files:
-        if fnmatch.fnmatch(ftxt, value):
-            return True
-    return False
+    return any(fnmatch.fnmatch(ftxt, value) for value in blacklist_files)
 
 
 def recurse(localroot, root, tree, maxdepth=100):
@@ -80,10 +78,7 @@ def recurse(localroot, root, tree, maxdepth=100):
         path = os.path.join(localpath, name)
 
         try:
-            if os.path.islink(path):
-                s = os.lstat(path)
-            else:
-                s = os.stat(path)
+            s = os.lstat(path) if os.path.islink(path) else os.stat(path)
         except OSError:
             continue
 
@@ -129,7 +124,7 @@ def recurse(localroot, root, tree, maxdepth=100):
         elif S_ISFIFO(s[ST_MODE]):
             entry[A_TYPE] = T_FIFO
         else:
-            sys.stderr.write("We should handle %s" % path)
+            sys.stderr.write(f"We should handle {path}")
             sys.exit(1)
 
         tree.append(entry)

@@ -61,9 +61,7 @@ def get_config_path() -> list[str]:
         join(root, "etc/cowrie.cfg"),
         join(root, "cowrie.cfg"),
     ]
-    found_confs = [path for path in config_files if exists(path)]
-
-    if found_confs:
+    if found_confs := [path for path in config_files if exists(path)]:
         return found_confs
 
     print("Config file not found")

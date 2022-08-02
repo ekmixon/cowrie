@@ -87,7 +87,7 @@ class Command_sudo(HoneyPotCommand):
     def start(self):
         start_value = None
         parsed_arguments = []
-        for count in range(0, len(self.args)):
+        for count in range(len(self.args)):
             class_found = self.protocol.getCommand(
                 self.args[count], self.environ["PATH"].split(":")
             )
@@ -95,15 +95,18 @@ class Command_sudo(HoneyPotCommand):
                 start_value = count
                 break
         if start_value is not None:
-            for index_2 in range(start_value, len(self.args)):
-                parsed_arguments.append(self.args[index_2])
+            parsed_arguments.extend(
+                self.args[index_2]
+                for index_2 in range(start_value, len(self.args))
+            )
 
         try:
             optlist, args = getopt.getopt(
-                self.args[0:start_value], "bEeHhKknPSVva:C:g:i:l:p:r:s:t:U:u:"
+                self.args[:start_value], "bEeHhKknPSVva:C:g:i:l:p:r:s:t:U:u:"
             )
+
         except getopt.GetoptError as err:
-            self.errorWrite("sudo: illegal option -- " + err.opt + "\n")
+            self.errorWrite(f"sudo: illegal option -- {err.opt}" + "\n")
             self.short_help()
             return
 
@@ -115,11 +118,11 @@ class Command_sudo(HoneyPotCommand):
                 self.long_help()
                 return
 
-        if len(parsed_arguments) > 0:
+        if parsed_arguments:
             cmd = parsed_arguments[0]
-            cmdclass = self.protocol.getCommand(cmd, self.environ["PATH"].split(":"))
-
-            if cmdclass:
+            if cmdclass := self.protocol.getCommand(
+                cmd, self.environ["PATH"].split(":")
+            ):
                 command = StdOutStdErrEmulationProtocol(
                     self.protocol, cmdclass, parsed_arguments[1:], None, None
                 )

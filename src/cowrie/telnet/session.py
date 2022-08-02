@@ -47,16 +47,11 @@ class HoneyPotTelnetSession(TelnetBootstrapProtocol):
             "SHELL": "/bin/bash",
             "HOME": self.home,
             "TMOUT": "1800",
+            "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+            if self.uid == 0
+            else "/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games",
         }
 
-        if self.uid == 0:
-            self.environ[
-                "PATH"
-            ] = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-        else:
-            self.environ[
-                "PATH"
-            ] = "/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games"
 
         # required because HoneyPotBaseProtocol relies on avatar.avatar.home
         self.avatar = self

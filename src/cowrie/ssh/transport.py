@@ -106,7 +106,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
 
         @type data: C{str}
         """
-        self.buf: bytes = self.buf + data
+        self.buf += data
         if not self.gotVersion:
             if b"\n" not in self.buf:
                 return
@@ -121,28 +121,25 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             m = re.match(br"SSH-(\d+.\d+)-(.*)", self.otherVersionString)
             if m is None:
                 log.msg(
-                    "Bad protocol version identification: {}".format(
-                        repr(self.otherVersionString)
-                    )
+                    f"Bad protocol version identification: {repr(self.otherVersionString)}"
                 )
+
                 # OpenSSH sending the same message
                 self.transport.write(b"Invalid SSH identification string.\n")
                 self.transport.loseConnection()
                 return
             else:
                 self.gotVersion = True
-                remote_version = m.group(1)
+                remote_version = m[1]
                 if remote_version not in self.supportedVersions:
                     self._unsupportedVersionReceived(self.otherVersionString)
                     return
                 i = self.buf.index(b"\n")
                 self.buf = self.buf[i + 1 :]
                 self.sendKexInit()
-        packet = self.getPacket()
-        while packet:
-            messageNum = ord(packet[0:1])
+        while packet := self.getPacket():
+            messageNum = ord(packet[:1])
             self.dispatchMessage(messageNum, packet[1:])
-            packet = self.getPacket()
 
     def dispatchMessage(self, message_num: int, payload: bytes) -> None:
         transport.SSHServerTransport.dispatchMessage(self, message_num, payload)
@@ -151,10 +148,12 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         """
         Override because OpenSSH pads with 0 on KEXINIT
         """
-        if self._keyExchangeState != self._KEY_EXCHANGE_NONE:
-            if not self._allowedKeyExchangeMessageType(messageType):
-                self._blockedByKeyExchange.append((messageType, payload))
-                return
+        if (
+            self._keyExchangeState != self._KEY_EXCHANGE_NONE
+            and not self._allowedKeyExchangeMessageType(messageType)
+        ):
+            self._blockedByKeyExchange.append((messageType, payload))
+            return
 
         payload = bytes((messageType,)) + payload
         if self.outgoingCompression:

@@ -38,14 +38,14 @@ class HoneyPotTelnetFactory(protocol.ServerFactory):
         """
         Special delivery to the loggers to avoid scope problems
         """
-        args["sessionno"] = "T{}".format(str(args["sessionno"]))
+        args["sessionno"] = f'T{str(args["sessionno"])}'
         for output in self.tac.output_plugins:
             output.logDispatch(**args)
 
     def startFactory(self):
         try:
             honeyfs = CowrieConfig.get("honeypot", "contents_path")
-            issuefile = honeyfs + "/etc/issue.net"
+            issuefile = f"{honeyfs}/etc/issue.net"
             self.banner = open(issuefile, "rb").read()
         except OSError:
             self.banner = b""

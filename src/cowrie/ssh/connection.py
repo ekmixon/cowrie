@@ -51,7 +51,7 @@ class CowrieSSHConnection(connection.SSHConnection):
     def ssh_CHANNEL_REQUEST(self, packet):
         localChannel = struct.unpack(">L", packet[:4])[0]
         requestType, rest = common.getNS(packet[4:])
-        wantReply = ord(rest[0:1])
+        wantReply = ord(rest[:1])
         channel = self.channels[localChannel]
 
         if requestType == b"shell":
