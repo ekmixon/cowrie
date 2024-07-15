@@ -12,7 +12,7 @@ pyre-check==0.9.6
 pytype==2021.10.11; platform_python_implementation=='CPython' and python_version<'3.10'
 pyupgrade==2.29.0
 pyyaml==6.0
-setuptools==58.2.0
+setuptools==70.0.0
 sphinx-copybutton==0.4.0
 sphinx_rtd_theme==1.0.0
 tox==3.24.4
