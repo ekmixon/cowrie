@@ -37,3 +37,5 @@ pymisp==2.4.148.1
 
 # redis
 redis==3.5.3
+setuptools>=70.0.0 # not directly required, pinned by Snyk to avoid a vulnerability
+zipp>=3.19.1 # not directly required, pinned by Snyk to avoid a vulnerability
