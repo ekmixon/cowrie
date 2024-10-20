@@ -12,7 +12,7 @@ elasticsearch==7.15.1
 hpfeeds3==0.9.10
 
 # mysql
-mysql-connector-python==8.0.26
+mysql-connector-python==9.1.0
 
 # mongodb
 pymongo==3.12.0
